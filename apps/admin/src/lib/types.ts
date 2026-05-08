@@ -79,3 +79,15 @@ export type Ticket = {
   summary: string;
   created_at: string;
 };
+
+export type AgentRun = {
+  id: string;
+  product_id: string | null;
+  conversation_id: string | null;
+  confidence: number | null;
+  risk_level: "low" | "medium" | "high" | "critical";
+  human_required: boolean;
+  status: "started" | "completed" | "failed" | "cancelled";
+  output_json: Record<string, unknown>;
+  created_at: string;
+};

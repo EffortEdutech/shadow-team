@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { zodTextFormat } from "openai/helpers/zod";
+import { z } from "zod";
+import { getOpenAIClient, getOpenAIModel } from "@/lib/openai";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function readString(formData: FormData, key: string) {
@@ -51,6 +54,271 @@ async function logAuditEvent(input: {
     entity_id: input.entityId ?? null,
     metadata_json: input.metadata ?? {},
   });
+}
+
+const SupportTriageDraft = z.object({
+  productSlug: z.string(),
+  intent: z.string(),
+  category: z.string(),
+  riskLevel: z.enum(["low", "medium", "high", "critical"]),
+  confidence: z.number().min(0).max(1),
+  humanRequired: z.boolean(),
+  recommendedStatus: z.enum(["open", "pending", "escalated", "closed"]),
+  escalationReason: z.string(),
+  draftReply: z.string(),
+  internalSummary: z.string(),
+});
+
+function formatMessagesForPrompt(
+  messages: Array<{
+    sender_type: string;
+    visibility: string;
+    content: string;
+    created_at: string;
+  }>,
+) {
+  return messages
+    .map(
+      (message) =>
+        `[${message.created_at}] ${message.sender_type}/${message.visibility}: ${message.content}`,
+    )
+    .join("\n\n");
+}
+
+export async function generateAiDraft(formData: FormData) {
+  const { supabase, userId } = await getSignedInUserId();
+  const openai = getOpenAIClient();
+
+  const conversationId = readString(formData, "conversationId");
+
+  if (!conversationId) {
+    throw new Error("Conversation is required.");
+  }
+
+  if (!openai) {
+    throw new Error("OPENAI_API_KEY is not configured.");
+  }
+
+  const { data: conversation, error: conversationError } = await supabase
+    .from("conversations")
+    .select(
+      "id, product_id, subject, status, priority, channel, products(name, slug, risk_level), contact_profiles(name, email, phone, company_name)",
+    )
+    .eq("id", conversationId)
+    .single<{
+      id: string;
+      product_id: string | null;
+      subject: string | null;
+      status: string;
+      priority: string;
+      channel: string;
+      products: { name: string; slug: string; risk_level: string } | null;
+      contact_profiles: {
+        name: string | null;
+        email: string | null;
+        phone: string | null;
+        company_name: string | null;
+      } | null;
+    }>();
+
+  if (conversationError || !conversation) {
+    throw new Error(conversationError?.message ?? "Conversation not found.");
+  }
+
+  const [
+    messagesResult,
+    profileResult,
+    agentsResult,
+  ] = await Promise.all([
+    supabase
+      .from("messages")
+      .select("sender_type, visibility, content, created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true })
+      .returns<
+        Array<{
+          sender_type: string;
+          visibility: string;
+          content: string;
+          created_at: string;
+        }>
+      >(),
+    conversation.product_id
+      ? supabase
+          .from("product_profiles")
+          .select(
+            "support_categories, restricted_actions, escalation_rules, metadata_json",
+          )
+          .eq("product_id", conversation.product_id)
+          .single<{
+            support_categories: string[];
+            restricted_actions: string[];
+            escalation_rules: string[];
+            metadata_json: Record<string, unknown>;
+          }>()
+      : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from("agents")
+      .select("id")
+      .eq("name", "Support Triage Agent")
+      .maybeSingle<{ id: string }>(),
+  ]);
+
+  if (messagesResult.error) {
+    throw new Error(messagesResult.error.message);
+  }
+
+  const profile = profileResult.data;
+  const transcript = formatMessagesForPrompt(messagesResult.data ?? []);
+  const model = getOpenAIModel();
+
+  const response = await openai.responses.parse({
+    model,
+    input: [
+      {
+        role: "system",
+        content:
+          "You are Shadow Team's Support Triage Agent. Classify the conversation and draft a safe human-reviewed support reply. Do not make final legal, financial, certification, refund, claim, contract, religious, tax, or production decisions. If the case touches restricted actions or escalation rules, set humanRequired true and recommend escalated status.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify(
+          {
+            conversation: {
+              subject: conversation.subject,
+              status: conversation.status,
+              priority: conversation.priority,
+              channel: conversation.channel,
+            },
+            product: conversation.products,
+            contact: conversation.contact_profiles,
+            productProfile: profile,
+            transcript,
+            outputInstructions: {
+              draftReply:
+                "Write a concise reply the human agent can review and send. If high risk, acknowledge, collect facts, and avoid final decisions.",
+              internalSummary:
+                "Summarize why you selected the category, risk, and escalation decision.",
+            },
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+    text: {
+      format: zodTextFormat(SupportTriageDraft, "support_triage_draft"),
+    },
+  });
+
+  const parsed = response.output_parsed;
+
+  if (!parsed) {
+    throw new Error("AI did not return a parsed support draft.");
+  }
+
+  const { data: agentRun, error: agentRunError } = await supabase
+    .from("agent_runs")
+    .insert({
+      agent_id: agentsResult.data?.id ?? null,
+      product_id: conversation.product_id,
+      conversation_id: conversationId,
+      input_json: {
+        model,
+        product_slug: conversation.products?.slug ?? null,
+        message_count: messagesResult.data?.length ?? 0,
+      },
+      output_json: parsed,
+      confidence: parsed.confidence,
+      risk_level: parsed.riskLevel,
+      human_required: parsed.humanRequired,
+      status: "completed",
+    })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (agentRunError) {
+    throw new Error(agentRunError.message);
+  }
+
+  const draftContent = [
+    `AI draft (${parsed.riskLevel} risk, ${Math.round(parsed.confidence * 100)}% confidence)`,
+    "",
+    parsed.draftReply,
+    "",
+    `Internal summary: ${parsed.internalSummary}`,
+    parsed.escalationReason
+      ? `Escalation reason: ${parsed.escalationReason}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const { error: messageError } = await supabase.from("messages").insert({
+    conversation_id: conversationId,
+    sender_type: "ai",
+    content: draftContent,
+    visibility: "internal",
+    metadata_json: {
+      agent_run_id: agentRun.id,
+      category: parsed.category,
+      intent: parsed.intent,
+      risk_level: parsed.riskLevel,
+      human_required: parsed.humanRequired,
+      recommended_status: parsed.recommendedStatus,
+    },
+  });
+
+  if (messageError) {
+    throw new Error(messageError.message);
+  }
+
+  await supabase
+    .from("conversations")
+    .update({
+      ai_status: parsed.humanRequired ? "waiting_human" : "drafted",
+      status:
+        parsed.recommendedStatus === "escalated"
+          ? "escalated"
+          : conversation.status,
+    })
+    .eq("id", conversationId);
+
+  await supabase.from("agent_tool_calls").insert({
+    agent_run_id: agentRun.id,
+    tool_name: "draft_support_reply",
+    input_json: {
+      conversation_id: conversationId,
+      product_slug: conversation.products?.slug ?? null,
+    },
+    output_json: parsed,
+    status: "completed",
+  });
+
+  await supabase.from("audit_events").insert({
+    product_id: conversation.product_id,
+    actor_type: "ai",
+    event_type: "ai_draft_generated",
+    entity_type: "conversation",
+    entity_id: conversationId,
+    metadata_json: {
+      agent_run_id: agentRun.id,
+      risk_level: parsed.riskLevel,
+      category: parsed.category,
+      human_required: parsed.humanRequired,
+    },
+  });
+
+  await logAuditEvent({
+    productId: conversation.product_id,
+    actorId: userId,
+    eventType: "ai_draft_requested",
+    entityType: "conversation",
+    entityId: conversationId,
+  });
+
+  revalidatePath("/support");
+  redirect(`/support?conversation=${conversationId}`);
 }
 
 export async function createManualConversation(formData: FormData) {

@@ -21,6 +21,7 @@ This folder is the planning source of truth for Sprint 0.
 | `11_SPRINT_1_DATABASE_FOUNDATION.md` | Supabase database foundation notes |
 | `12_SPRINT_2_ADMIN_DASHBOARD_SHELL.md` | Admin dashboard shell notes |
 | `13_SPRINT_3_SUPPORT_INBOX.md` | Support inbox MVP notes |
+| `14_SPRINT_4_AI_TRIAGE_DRAFT_REPLY.md` | AI triage and draft reply notes |
 
 ## Product Profiles
 

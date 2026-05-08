@@ -69,6 +69,21 @@ Included:
 - create ticket from conversation
 - read-only ticket list
 
+## Sprint 4 Status
+
+Sprint 4 adds safe AI triage and draft replies.
+
+Included:
+
+- OpenAI-backed structured triage
+- AI draft reply button in Support Inbox
+- internal AI draft messages
+- agent run logging
+- agent tool call logging
+- recent agent runs on Agents page
+
+AI drafts remain internal. Humans still send replies.
+
 Useful commands:
 
 ```powershell

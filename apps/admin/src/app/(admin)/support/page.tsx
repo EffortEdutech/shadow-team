@@ -5,6 +5,7 @@ import { StateCard } from "@/components/ui/state-card";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   ContactProfile,
+  AgentRun,
   Conversation,
   Message,
   Product,
@@ -16,6 +17,7 @@ import {
   assignConversationToSelf,
   createManualConversation,
   createTicketFromConversation,
+  generateAiDraft,
   updateConversationStatus,
 } from "./actions";
 
@@ -49,9 +51,9 @@ function priorityTone(priority: Conversation["priority"] | Ticket["priority"]) {
 }
 
 function senderTone(senderType: Message["sender_type"]) {
+  if (senderType === "ai") return "neutral";
   if (senderType === "human") return "success";
   if (senderType === "note") return "warning";
-  if (senderType === "ai") return "neutral";
   return "neutral";
 }
 
@@ -281,7 +283,7 @@ export default async function SupportPage({
     conversations[0] ??
     null;
 
-  const [messagesResult, ticketsResult, profileResult] = activeConversation
+  const [messagesResult, ticketsResult, profileResult, agentRunsResult] = activeConversation
     ? await Promise.all([
         supabase
           .from("messages")
@@ -308,16 +310,28 @@ export default async function SupportPage({
               .eq("product_id", activeConversation.product_id)
               .single<ProductProfile>()
           : Promise.resolve({ data: null, error: null }),
+        supabase
+          .from("agent_runs")
+          .select(
+            "id, product_id, conversation_id, confidence, risk_level, human_required, status, output_json, created_at",
+          )
+          .eq("conversation_id", activeConversation.id)
+          .order("created_at", { ascending: false })
+          .limit(5)
+          .returns<AgentRun[]>(),
       ])
     : [
         { data: [] as Message[], error: null },
         { data: [] as Ticket[], error: null },
         { data: null as ProductProfile | null, error: null },
+        { data: [] as AgentRun[], error: null },
       ];
 
   const messages = messagesResult.data ?? [];
   const tickets = ticketsResult.data ?? [];
   const profile = profileResult.data;
+  const agentRuns = agentRunsResult.data ?? [];
+  const latestAgentRun = agentRuns[0] ?? null;
 
   return (
     <>
@@ -418,6 +432,7 @@ export default async function SupportPage({
                     <Badge tone={priorityTone(activeConversation.priority)}>
                       {activeConversation.priority}
                     </Badge>
+                    <Badge>{activeConversation.ai_status}</Badge>
                   </div>
                 </div>
               </div>
@@ -477,6 +492,52 @@ export default async function SupportPage({
           {activeConversation ? (
             <>
               <section className="rounded-lg border border-border bg-panel p-5 shadow-sm">
+                <div className="mb-5 rounded-md border border-accent/20 bg-accent/5 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold">AI Triage</h2>
+                      <p className="mt-1 text-sm leading-6 text-muted">
+                        Generate a draft classification and reply. Human review
+                        is still required before sending.
+                      </p>
+                    </div>
+                    <form action={generateAiDraft}>
+                      <input
+                        type="hidden"
+                        name="conversationId"
+                        value={activeConversation.id}
+                      />
+                      <button
+                        type="submit"
+                        className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong"
+                      >
+                        Generate AI draft
+                      </button>
+                    </form>
+                  </div>
+
+                  {latestAgentRun ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Badge tone={statusTone(latestAgentRun.status === "completed" ? "open" : "pending")}>
+                        {latestAgentRun.status}
+                      </Badge>
+                      <Badge tone={priorityTone(latestAgentRun.risk_level === "critical" ? "urgent" : latestAgentRun.risk_level === "high" ? "high" : "normal")}>
+                        {latestAgentRun.risk_level}
+                      </Badge>
+                      <Badge>
+                        {latestAgentRun.confidence === null
+                          ? "confidence n/a"
+                          : `${Math.round(latestAgentRun.confidence * 100)}% confidence`}
+                      </Badge>
+                      <Badge>
+                        {latestAgentRun.human_required
+                          ? "human required"
+                          : "human review"}
+                      </Badge>
+                    </div>
+                  ) : null}
+                </div>
+
                 <h2 className="text-base font-semibold">Contact</h2>
                 <div className="mt-4 space-y-3 text-sm">
                   <div>
