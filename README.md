@@ -98,6 +98,20 @@ Included:
 - approved knowledge supplied to AI draft generation
 - knowledge citations linked to agent runs
 
+## Sprint 6 Status
+
+Sprint 6 adds the live Analytics Dashboard.
+
+Included:
+
+- support summary cards
+- conversation and ticket breakdowns
+- AI confidence/risk metrics
+- knowledge-grounded run metrics
+- product health table
+- recent escalations
+- recent AI runs
+
 Useful commands:
 
 ```powershell
