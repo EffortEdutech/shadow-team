@@ -112,6 +112,20 @@ Included:
 - recent escalations
 - recent AI runs
 
+## Sprint 7 Status
+
+Sprint 7 adds the first product connector for MyExpensio.
+
+Included:
+
+- inbound connector API
+- shared secret authentication
+- service-role server writes
+- contact profile creation/update
+- support conversation creation
+- first user message creation
+- connector audit event
+
 Useful commands:
 
 ```powershell

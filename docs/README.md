@@ -24,6 +24,7 @@ This folder is the planning source of truth for Sprint 0.
 | `14_SPRINT_4_AI_TRIAGE_DRAFT_REPLY.md` | AI triage and draft reply notes |
 | `15_SPRINT_5_KNOWLEDGE_BASE_MVP.md` | Knowledge base MVP notes |
 | `16_SPRINT_6_ANALYTICS_DASHBOARD.md` | Analytics dashboard notes |
+| `17_SPRINT_7_MYEXPENSIO_CONNECTOR.md` | MyExpensio connector notes |
 
 ## Product Profiles
 
