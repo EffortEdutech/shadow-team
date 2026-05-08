@@ -20,6 +20,7 @@ This folder is the planning source of truth for Sprint 0.
 | `10_SPRINT_0_LOCK.md` | Sprint 0 completion checklist |
 | `11_SPRINT_1_DATABASE_FOUNDATION.md` | Supabase database foundation notes |
 | `12_SPRINT_2_ADMIN_DASHBOARD_SHELL.md` | Admin dashboard shell notes |
+| `13_SPRINT_3_SUPPORT_INBOX.md` | Support inbox MVP notes |
 
 ## Product Profiles
 

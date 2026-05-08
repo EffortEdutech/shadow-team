@@ -32,3 +32,50 @@ export type AgentProductAccess = {
   access_level: string;
   products: Pick<Product, "name" | "slug" | "risk_level"> | null;
 };
+
+export type ContactProfile = {
+  id: string;
+  external_id: string | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  company_name: string | null;
+};
+
+export type Conversation = {
+  id: string;
+  product_id: string | null;
+  channel: "manual" | "web" | "app" | "whatsapp" | "email" | "api" | "other";
+  contact_profile_id: string | null;
+  status: "open" | "pending" | "escalated" | "closed";
+  priority: "low" | "normal" | "high" | "urgent";
+  assigned_to: string | null;
+  ai_status: string;
+  subject: string | null;
+  last_message_preview: string | null;
+  created_at: string;
+  updated_at: string;
+  last_message_at: string | null;
+};
+
+export type Message = {
+  id: string;
+  conversation_id: string;
+  sender_type: "user" | "ai" | "human" | "system" | "note";
+  sender_id: string | null;
+  content: string;
+  visibility: "external" | "internal";
+  created_at: string;
+};
+
+export type Ticket = {
+  id: string;
+  conversation_id: string | null;
+  product_id: string | null;
+  category: string;
+  status: "open" | "pending" | "escalated" | "closed";
+  priority: "low" | "normal" | "high" | "urgent";
+  assigned_to: string | null;
+  summary: string;
+  created_at: string;
+};

@@ -54,6 +54,21 @@ Included:
 - settings system status view
 - placeholders for support, tickets, analytics, and knowledge
 
+## Sprint 3 Status
+
+Sprint 3 builds the Support Inbox MVP.
+
+Included:
+
+- manual conversation creation
+- 3-column support inbox
+- message thread
+- human replies and internal notes
+- status updates
+- assign-to-self workflow
+- create ticket from conversation
+- read-only ticket list
+
 Useful commands:
 
 ```powershell
