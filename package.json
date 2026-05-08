@@ -1,0 +1,11 @@
+{
+  "name": "shadow-team",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "admin:dev": "npm --prefix apps/admin run dev",
+    "admin:build": "npm --prefix apps/admin run build",
+    "admin:lint": "npm --prefix apps/admin run lint"
+  }
+}
+

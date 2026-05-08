@@ -34,6 +34,22 @@ Sprint 0 is documentation lock:
 - security and audit spec
 - decision log
 
+## Sprint 1 Status
+
+Sprint 1 created and applied the Supabase database foundation for project `mzcdnvtmwyarcefbroja`.
+
+## Sprint 2 Status
+
+Sprint 2 starts the admin dashboard shell in `apps/admin`.
+
+Useful commands:
+
+```powershell
+npm run admin:dev
+npm run admin:build
+npm run admin:lint
+```
+
 ## Build Order
 
 ```text

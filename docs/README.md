@@ -18,6 +18,8 @@ This folder is the planning source of truth for Sprint 0.
 | `08_SECURITY_AND_AUDIT.md` | Roles, audit events, sensitive data, and production safety |
 | `09_DECISION_LOG.md` | Locked decisions and future decision records |
 | `10_SPRINT_0_LOCK.md` | Sprint 0 completion checklist |
+| `11_SPRINT_1_DATABASE_FOUNDATION.md` | Supabase database foundation notes |
+| `12_SPRINT_2_ADMIN_DASHBOARD_SHELL.md` | Admin dashboard shell notes |
 
 ## Product Profiles
 
@@ -36,4 +38,3 @@ Each product profile defines allowed AI actions, restricted actions, escalation 
 ## Rule
 
 If the project direction changes, update the decision log before changing implementation.
-
