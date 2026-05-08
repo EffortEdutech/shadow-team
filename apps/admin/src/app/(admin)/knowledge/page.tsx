@@ -263,6 +263,11 @@ export default async function KnowledgePage({
                       <p className="mt-2 text-sm text-muted">
                         {source.products?.name ?? "Company-wide"}
                       </p>
+                      <p className="mt-1 font-mono text-xs text-muted">
+                        {source.product_id
+                          ? `product_id: ${source.product_id}`
+                          : "product_id: company-wide"}
+                      </p>
                       {source.source_path ? (
                         <p className="mt-1 break-all font-mono text-xs text-muted">
                           {source.source_path}

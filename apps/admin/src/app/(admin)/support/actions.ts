@@ -163,30 +163,37 @@ export async function generateAiDraft(formData: FormData) {
       .select("id")
       .eq("name", "Support Triage Agent")
       .maybeSingle<{ id: string }>(),
-    conversation.product_id
-      ? supabase
-          .from("knowledge_sources")
-          .select(
-            "id, source_title, source_type, version, knowledge_chunks(id, chunk_text)",
-          )
-          .eq("product_id", conversation.product_id)
-          .eq("status", "approved")
-          .order("updated_at", { ascending: false })
-          .limit(8)
-          .returns<
-            Array<{
-              id: string;
-              source_title: string;
-              source_type: string;
-              version: string;
-              knowledge_chunks: Array<{ id: string; chunk_text: string }>;
-            }>
-          >()
-      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("knowledge_sources")
+      .select(
+        "id, product_id, source_title, source_type, version, knowledge_chunks(id, chunk_text)",
+      )
+      .eq("status", "approved")
+      .or(
+        conversation.product_id
+          ? `product_id.eq.${conversation.product_id},product_id.is.null`
+          : "product_id.is.null",
+      )
+      .order("updated_at", { ascending: false })
+      .limit(8)
+      .returns<
+        Array<{
+          id: string;
+          product_id: string | null;
+          source_title: string;
+          source_type: string;
+          version: string;
+          knowledge_chunks: Array<{ id: string; chunk_text: string }>;
+        }>
+      >(),
   ]);
 
   if (messagesResult.error) {
     throw new Error(messagesResult.error.message);
+  }
+
+  if (knowledgeSourcesResult.error) {
+    throw new Error(knowledgeSourcesResult.error.message);
   }
 
   const profile = profileResult.data;
@@ -200,6 +207,7 @@ export async function generateAiDraft(formData: FormData) {
         title: source.source_title,
         type: source.source_type,
         version: source.version,
+        scope: source.product_id ? "product" : "company",
         text: chunk.chunk_text.slice(0, 1800),
       })),
   );
