@@ -14,6 +14,8 @@ export type ProductProfile = {
   support_categories: string[];
   restricted_actions: string[];
   escalation_rules: string[];
+  billing_model: string | null;
+  metadata_json: Record<string, unknown>;
 };
 
 export type Agent = {
@@ -21,5 +23,12 @@ export type Agent = {
   name: string;
   department: string;
   status: string;
+  description: string | null;
+  system_prompt_version: string;
 };
 
+export type AgentProductAccess = {
+  id: string;
+  access_level: string;
+  products: Pick<Product, "name" | "slug" | "risk_level"> | null;
+};

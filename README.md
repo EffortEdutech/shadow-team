@@ -40,7 +40,19 @@ Sprint 1 created and applied the Supabase database foundation for project `mzcdn
 
 ## Sprint 2 Status
 
-Sprint 2 starts the admin dashboard shell in `apps/admin`.
+Sprint 2 builds the admin dashboard shell in `apps/admin`.
+
+Included:
+
+- Supabase login
+- protected owner/admin layout
+- active desktop and mobile navigation
+- dashboard overview
+- product register
+- product profile detail pages
+- agents read-only view
+- settings system status view
+- placeholders for support, tickets, analytics, and knowledge
 
 Useful commands:
 

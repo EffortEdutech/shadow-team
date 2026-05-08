@@ -18,6 +18,12 @@ Build:
 - dashboard overview
 - product register page
 - placeholder routes for later modules
+- active route navigation
+- mobile navigation
+- product detail/profile route
+- live Agents page
+- live Settings system status page
+- reusable empty/error state card
 
 Do not build yet:
 
@@ -35,12 +41,13 @@ Do not build yet:
 | `/login` | Supabase email/password sign in |
 | `/dashboard` | Admin overview and Sprint 2 status |
 | `/products` | Reads seeded products from Supabase |
+| `/products/[slug]` | Reads product profile, categories, restrictions, and escalation rules |
 | `/support` | Sprint 3 placeholder |
 | `/tickets` | Sprint 3 placeholder |
 | `/analytics` | Sprint 6 placeholder |
 | `/knowledge` | Sprint 5 placeholder |
-| `/agents` | Sprint 4 placeholder |
-| `/settings` | Sprint 2 placeholder |
+| `/agents` | Reads seeded draft agents and product access |
+| `/settings` | Shows owner role, project ref, and seed counts |
 
 ## Local Environment
 
@@ -74,5 +81,24 @@ Expected:
 - owner can sign in
 - dashboard loads
 - product register shows six seeded products
+- product detail pages show profile boundaries
+- agents page shows seeded draft agents
+- settings page confirms owner role and seed counts
 - unauthenticated users redirect to `/login`
 
+## Completion Checklist
+
+- [x] Admin app scaffolded
+- [x] Supabase login works
+- [x] Protected admin layout works
+- [x] Owner role is read from `shadow_team_role`
+- [x] Active sidebar navigation
+- [x] Mobile navigation
+- [x] Dashboard overview
+- [x] Product register
+- [x] Product detail/profile page
+- [x] Agents read-only page
+- [x] Settings system status page
+- [x] Placeholder routes for later sprints
+- [x] Lint passes
+- [x] Production build passes

@@ -1,7 +1,9 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
+import { StateCard } from "@/components/ui/state-card";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
+import Link from "next/link";
 
 function riskTone(risk: Product["risk_level"]) {
   if (risk === "high" || risk === "critical") return "danger";
@@ -30,9 +32,16 @@ export default async function ProductsPage() {
       />
 
       {error ? (
-        <section className="rounded-lg border border-danger/30 bg-danger/5 p-4 text-sm text-danger">
-          {error.message}
-        </section>
+        <StateCard
+          title="Unable to load products"
+          description={error.message}
+          tone="danger"
+        />
+      ) : (products ?? []).length === 0 ? (
+        <StateCard
+          title="No products found"
+          description="Run the Sprint 1 seed file to populate the product register."
+        />
       ) : null}
 
       <section className="overflow-hidden rounded-lg border border-border bg-panel shadow-sm">
@@ -53,7 +62,14 @@ export default async function ProductsPage() {
                 <td className="px-4 py-4 font-mono text-sm">
                   {product.priority}
                 </td>
-                <td className="px-4 py-4 font-medium">{product.name}</td>
+                <td className="px-4 py-4 font-medium">
+                  <Link
+                    className="text-accent-strong underline-offset-4 hover:underline"
+                    href={`/products/${product.slug}`}
+                  >
+                    {product.name}
+                  </Link>
+                </td>
                 <td className="px-4 py-4 font-mono text-xs text-muted">
                   {product.slug}
                 </td>
