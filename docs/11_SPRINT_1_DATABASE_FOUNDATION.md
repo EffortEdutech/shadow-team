@@ -46,6 +46,7 @@ Do not build yet:
 |---|---|
 | `supabase/migrations/20260508160000_sprint_1_database_foundation.sql` | Creates schema, indexes, triggers, helper functions, and RLS policies |
 | `supabase/seed.sql` | Seeds products, product profiles, draft agents, and agent access |
+| `supabase/bootstrap_owner.sql` | Sets the first Supabase Auth user as Shadow Team owner |
 | `supabase/README.md` | Supabase apply instructions |
 | `.env.example` | Documents required Supabase environment variables without secrets |
 | `.gitignore` | Prevents local secrets and generated files from being committed |
@@ -56,8 +57,9 @@ Use Supabase SQL Editor first:
 
 1. Run the migration SQL.
 2. Run `supabase/seed.sql`.
-3. Confirm products were inserted.
-4. Set the first admin user's `app_metadata.shadow_team_role` to `owner`.
+3. Run `supabase/bootstrap_owner.sql` after the first Auth user exists.
+4. Confirm products were inserted.
+5. Confirm the first admin user's `app_metadata.shadow_team_role` is `owner`.
 
 ## RLS Role Metadata
 
@@ -110,4 +112,3 @@ order by name;
 - draft agents exist in database
 - RLS is enabled on all new tables
 - no secrets are committed
-

@@ -18,6 +18,7 @@ https://supabase.com/dashboard/project/mzcdnvtmwyarcefbroja
 |---|---|
 | `migrations/20260508160000_sprint_1_database_foundation.sql` | Creates tables, indexes, triggers, RLS policies, and helper functions |
 | `seed.sql` | Seeds products, product profiles, first draft agents, and agent product access |
+| `bootstrap_owner.sql` | Sets the first Supabase Auth user as Shadow Team owner |
 
 ## Apply Option A - Supabase SQL Editor
 
@@ -25,6 +26,7 @@ https://supabase.com/dashboard/project/mzcdnvtmwyarcefbroja
 2. Go to SQL Editor.
 3. Run the migration SQL first.
 4. Run `seed.sql` after the migration succeeds.
+5. Run `bootstrap_owner.sql` after the first owner Auth user exists.
 
 ## Apply Option B - Supabase CLI
 
@@ -59,5 +61,11 @@ viewer
 ```
 
 For the first owner/admin user, set `app_metadata.shadow_team_role` to `owner` in Supabase Auth.
+
+The first owner bootstrap file currently targets:
+
+```text
+kamalabdlatif@gmail.com
+```
 
 During backend development, server-side operations may use the service role key, but never expose the service role key to the browser.
