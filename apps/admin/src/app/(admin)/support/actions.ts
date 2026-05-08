@@ -129,6 +129,7 @@ export async function generateAiDraft(formData: FormData) {
     messagesResult,
     profileResult,
     agentsResult,
+    knowledgeSourcesResult,
   ] = await Promise.all([
     supabase
       .from("messages")
@@ -162,6 +163,26 @@ export async function generateAiDraft(formData: FormData) {
       .select("id")
       .eq("name", "Support Triage Agent")
       .maybeSingle<{ id: string }>(),
+    conversation.product_id
+      ? supabase
+          .from("knowledge_sources")
+          .select(
+            "id, source_title, source_type, version, knowledge_chunks(id, chunk_text)",
+          )
+          .eq("product_id", conversation.product_id)
+          .eq("status", "approved")
+          .order("updated_at", { ascending: false })
+          .limit(8)
+          .returns<
+            Array<{
+              id: string;
+              source_title: string;
+              source_type: string;
+              version: string;
+              knowledge_chunks: Array<{ id: string; chunk_text: string }>;
+            }>
+          >()
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (messagesResult.error) {
@@ -171,6 +192,17 @@ export async function generateAiDraft(formData: FormData) {
   const profile = profileResult.data;
   const transcript = formatMessagesForPrompt(messagesResult.data ?? []);
   const model = getOpenAIModel();
+  const approvedKnowledge = (knowledgeSourcesResult.data ?? []).flatMap(
+    (source) =>
+      source.knowledge_chunks.slice(0, 2).map((chunk) => ({
+        sourceId: source.id,
+        chunkId: chunk.id,
+        title: source.source_title,
+        type: source.source_type,
+        version: source.version,
+        text: chunk.chunk_text.slice(0, 1800),
+      })),
+  );
 
   const response = await openai.responses.parse({
     model,
@@ -193,12 +225,13 @@ export async function generateAiDraft(formData: FormData) {
             product: conversation.products,
             contact: conversation.contact_profiles,
             productProfile: profile,
+            approvedKnowledge,
             transcript,
             outputInstructions: {
               draftReply:
                 "Write a concise reply the human agent can review and send. If high risk, acknowledge, collect facts, and avoid final decisions.",
               internalSummary:
-                "Summarize why you selected the category, risk, and escalation decision.",
+                "Summarize why you selected the category, risk, escalation decision, and whether approved knowledge was used. If no approved knowledge is relevant, say so.",
             },
           },
           null,
@@ -227,6 +260,7 @@ export async function generateAiDraft(formData: FormData) {
         model,
         product_slug: conversation.products?.slug ?? null,
         message_count: messagesResult.data?.length ?? 0,
+        approved_knowledge_count: approvedKnowledge.length,
       },
       output_json: parsed,
       confidence: parsed.confidence,
@@ -294,6 +328,17 @@ export async function generateAiDraft(formData: FormData) {
     output_json: parsed,
     status: "completed",
   });
+
+  if (approvedKnowledge.length > 0) {
+    await supabase.from("knowledge_citations").insert(
+      approvedKnowledge.map((item) => ({
+        agent_run_id: agentRun.id,
+        source_id: item.sourceId,
+        chunk_id: item.chunkId,
+        used_for: "support_triage_draft_context",
+      })),
+    );
+  }
 
   await supabase.from("audit_events").insert({
     product_id: conversation.product_id,

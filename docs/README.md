@@ -22,6 +22,7 @@ This folder is the planning source of truth for Sprint 0.
 | `12_SPRINT_2_ADMIN_DASHBOARD_SHELL.md` | Admin dashboard shell notes |
 | `13_SPRINT_3_SUPPORT_INBOX.md` | Support inbox MVP notes |
 | `14_SPRINT_4_AI_TRIAGE_DRAFT_REPLY.md` | AI triage and draft reply notes |
+| `15_SPRINT_5_KNOWLEDGE_BASE_MVP.md` | Knowledge base MVP notes |
 
 ## Product Profiles
 

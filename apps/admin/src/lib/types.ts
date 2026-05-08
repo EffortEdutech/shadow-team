@@ -91,3 +91,25 @@ export type AgentRun = {
   output_json: Record<string, unknown>;
   created_at: string;
 };
+
+export type KnowledgeSource = {
+  id: string;
+  product_id: string | null;
+  source_type: string;
+  source_title: string;
+  source_path: string | null;
+  status: "draft" | "approved" | "archived";
+  version: string;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type KnowledgeChunk = {
+  id: string;
+  source_id: string;
+  chunk_text: string;
+  embedding_ref: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+};

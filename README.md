@@ -84,6 +84,20 @@ Included:
 
 AI drafts remain internal. Humans still send replies.
 
+## Sprint 5 Status
+
+Sprint 5 adds the Knowledge Base MVP.
+
+Included:
+
+- Knowledge page
+- manual FAQ/SOP/policy/user-guide entries
+- draft/approved/archive status
+- product-specific knowledge
+- simple chunk storage
+- approved knowledge supplied to AI draft generation
+- knowledge citations linked to agent runs
+
 Useful commands:
 
 ```powershell
