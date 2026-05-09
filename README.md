@@ -259,6 +259,22 @@ Included:
 - release readiness drafts in Approvals Inbox
 - human release-owner approval before any release decision
 
+## Sprint 17 Status
+
+Sprint 17 adds the Human Work Queue.
+
+Included:
+
+- `/work-queue` page
+- Work Queue navigation item
+- high-priority support queue
+- pending approvals queue
+- release readiness queue
+- failed connector delivery queue
+- high-risk AI review queue
+- open tickets queue
+- read-only links back to source workflows
+
 Useful commands:
 
 ```powershell

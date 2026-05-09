@@ -34,6 +34,7 @@ This folder is the planning source of truth for Sprint 0.
 | `24_SPRINT_14_MANAGEMENT_REPORT_WORKFLOW.md` | Management Report Agent workflow notes |
 | `25_SPRINT_15_APPROVALS_INBOX.md` | Approvals Inbox notes |
 | `26_SPRINT_16_RELEASE_READINESS_GATE.md` | Release Readiness Gate notes |
+| `27_SPRINT_17_HUMAN_WORK_QUEUE.md` | Human Work Queue notes |
 
 ## Product Profiles
 

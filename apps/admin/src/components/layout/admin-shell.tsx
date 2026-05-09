@@ -8,6 +8,7 @@ import {
   BookOpen,
   Bot,
   CheckSquare,
+  ClipboardList,
   Inbox,
   LayoutDashboard,
   Menu,
@@ -20,6 +21,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/work-queue", label: "Work Queue", icon: ClipboardList },
   { href: "/products", label: "Products", icon: Package },
   { href: "/support", label: "Support", icon: Inbox },
   { href: "/tickets", label: "Tickets", icon: Ticket },
