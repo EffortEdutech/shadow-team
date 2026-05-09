@@ -354,6 +354,22 @@ Included:
 - recent campaign and content draft lists
 - draft-only safety boundary
 
+## Sprint 21 Status
+
+Sprint 21 adds the Social Media Draft Workflow.
+
+Included:
+
+- Product Marketing Agent seed
+- Social Media Content Agent seed
+- AI Social Drafts form on `/marketing`
+- multi-channel social/content draft generation
+- draft-only records in `marketing_content_drafts`
+- agent run logging
+- agent tool call logging
+- audit events
+- no public publishing
+
 Useful commands:
 
 ```powershell

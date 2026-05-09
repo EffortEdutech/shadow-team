@@ -22,6 +22,7 @@ https://supabase.com/dashboard/project/mzcdnvtmwyarcefbroja
 | `sprint_10_department_agents.sql` | Adds first non-support department agents and product access |
 | `sprint_19_work_item_reviews.sql` | Adds operator ownership and reviewed-today tracking for work queue items |
 | `sprint_20_marketing_foundation.sql` | Adds marketing profiles, channels, campaigns, and content drafts |
+| `sprint_21_social_media_agents.sql` | Adds Product Marketing and Social Media Content agents |
 
 ## Apply Option A - Supabase SQL Editor
 
