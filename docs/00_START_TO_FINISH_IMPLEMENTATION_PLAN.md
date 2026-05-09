@@ -12,6 +12,22 @@ Core principle:
 AI does the work. Human owns the decision.
 ```
 
+This project is the missing company operations layer for:
+
+- support
+- product onboarding
+- product marketing and social media marketing
+- sales follow-up
+- documentation
+- QA
+- product management
+- analytics
+- finance/admin reminders
+- compliance review
+- technical operations
+
+Marketing is not a later decoration. It is one of the main operating surfaces because every product needs repeatable positioning, social content, campaign planning, lead capture, and human-approved publishing.
+
 ## 2. Non-Negotiable Early Decisions
 
 | Area | Decision |
@@ -21,6 +37,7 @@ AI does the work. Human owns the decision.
 | First UI | Build the admin dashboard and support inbox first, not public marketing pages. |
 | First AI behavior | AI drafts and classifies first. It does not auto-send until reviewed. |
 | First channels | Start with manual/admin-created conversations and web/in-app chat. WhatsApp comes later. |
+| Marketing channels | Start with draft-only social/content planning. No public posting until approval and channel connectors exist. |
 | Database | Use Supabase Postgres first. Add pgvector/search later when documents are stable. |
 | Realtime | Use Supabase Realtime first. Custom WebSocket gateway can wait. |
 | Auth | Use Supabase Auth and role-based access. |
@@ -40,6 +57,7 @@ shadow-team/
     ui/
     knowledge/
     integrations/
+    marketing/
   docs/
     products/
   supabase/
@@ -121,11 +139,56 @@ Connect products in this order:
 5. Narrio
 6. Pagecast
 
-### Phase 8 - Department Agents
+### Phase 8 - Product Marketing and Sales Operations
+
+Add the first growth operating layer before deeper automation.
+
+Build:
+
+- marketing campaign records
+- product positioning notes
+- audience/persona notes
+- social content draft workflow
+- campaign calendar view
+- human approval before publishing
+- lead follow-up draft workflow
+- campaign performance placeholders
+
+First marketing agents:
+
+1. Product Marketing Agent
+2. Social Media Content Agent
+3. Campaign Planner Agent
+4. Lead Follow-up Agent
+
+AI may:
+
+- draft social posts
+- draft campaign ideas
+- adapt product positioning into channel-specific content
+- draft follow-up messages
+- suggest content calendars
+- summarize campaign performance
+
+AI may not:
+
+- publish social posts without approval
+- make official public claims without approval
+- change pricing promises
+- send sales follow-ups automatically
+- use sensitive customer data in public content
+
+Exit criteria:
+
+- Each product has a marketing profile.
+- Marketing drafts are reviewed in Approvals before use.
+- Social media work is trackable from idea to approved draft.
+
+### Phase 9 - Department Agents
 
 Add documentation, QA, product manager, sales follow-up, finance/admin, compliance, and developer operations agents.
 
-### Phase 9 - Controlled Automation
+### Phase 10 - Controlled Automation
 
 Only after enough data exists, automate low-risk tasks such as tagging, ticket creation, daily summaries, release note drafts, FAQ suggestions, and possibly low-risk FAQ replies.
 
@@ -145,6 +208,7 @@ MVP includes:
 - AI draft reply
 - human handoff
 - basic analytics
+- first marketing/social draft workflow
 
 MVP excludes:
 
@@ -155,6 +219,8 @@ MVP excludes:
 - full CRM
 - full sales pipeline
 - full finance module
+- autonomous social media publishing
+- paid ads automation
 - production deployment automation
 
 ## 6. Definition of Done
@@ -170,5 +236,31 @@ Shadow Team is successful when:
 - agent actions are logged
 - analytics show performance and gaps
 - product bugs become structured tasks
+- marketing ideas become approved social/content drafts
+- sales follow-ups become trackable
 - company operations become trackable
 
+## 7. Revised Build Direction After Sprint 19
+
+The first 19 sprints built the internal operating spine:
+
+```text
+Support -> AI Drafting -> Knowledge -> Analytics -> Connectors -> Department Agents -> Approvals -> Release Gates -> Work Queue -> Daily Brief -> Reviewed Today
+```
+
+The next correction is to add the missing growth layer:
+
+```text
+Marketing Profile -> Campaign Calendar -> Social Drafts -> Marketing Approvals -> Lead Follow-up -> Marketing Analytics
+```
+
+Recommended next sprints:
+
+| Sprint | Focus | Output |
+|---:|---|---|
+| 20 | Marketing Foundation | marketing profiles, channels, campaign/content tables |
+| 21 | Social Media Draft Workflow | Product Marketing Agent and Social Media Content Agent create approval-ready drafts |
+| 22 | Campaign Calendar | calendar/list view for planned content by product and channel |
+| 23 | Lead Follow-up Workflow | sales follow-up drafts tied to product interest and campaign source |
+| 24 | Marketing Analytics | content status, campaign counts, channel metrics placeholders |
+| 25 | Social Channel Connector Prep | connector-safe outbox model for future LinkedIn/Facebook/X/Instagram posting |

@@ -37,6 +37,7 @@ This folder is the planning source of truth for Sprint 0.
 | `27_SPRINT_17_HUMAN_WORK_QUEUE.md` | Human Work Queue notes |
 | `28_SPRINT_18_DAILY_BRIEF_OPERATOR_DASHBOARD.md` | Daily Brief and Operator Dashboard notes |
 | `29_SPRINT_19_OPERATOR_OWNERSHIP_REVIEWED_TODAY.md` | Operator Ownership and Reviewed Today notes |
+| `30_STRATEGY_RESET_MARKETING_OPERATIONS_LAYER.md` | Strategy reset for product marketing and social media marketing |
 
 ## Product Profiles
 

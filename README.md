@@ -12,6 +12,20 @@ The goal is to build a practical company operations layer for multiple products:
 - Pagecast
 - future products
 
+The operating layers include:
+
+- support
+- product onboarding
+- product marketing and social media marketing
+- sales follow-up
+- documentation
+- QA
+- product management
+- analytics
+- finance/admin reminders
+- compliance review
+- technical operations
+
 The first milestone is not full autonomy. The first milestone is operational control:
 
 ```text
@@ -308,6 +322,19 @@ Included:
 - audit event for daily work item review
 - Daily Brief reviewed-today metric
 - no business decision changes from review tracking
+
+## Strategy Reset: Marketing Operations Layer
+
+After Sprint 19, the plan is corrected to make product marketing and social media marketing first-class modules.
+
+Next direction:
+
+- Sprint 20: Marketing Foundation
+- Sprint 21: Social Media Draft Workflow
+- Sprint 22: Campaign Calendar
+- Sprint 23: Sales Follow-up Workflow
+- Sprint 24: Marketing Analytics
+- Sprint 25: Social Connector Prep
 
 Useful commands:
 

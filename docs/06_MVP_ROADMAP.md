@@ -5,7 +5,7 @@
 Build the smallest useful Shadow Team system:
 
 ```text
-Admin Dashboard + Product Register + Support Inbox + Tickets + AI Draft Reply + Basic Analytics
+Admin Dashboard + Product Register + Support Inbox + Tickets + AI Draft Reply + Basic Analytics + Marketing Draft Workflow
 ```
 
 ## Sprint 0 - Documentation Lock
@@ -137,3 +137,84 @@ Exit criteria:
 
 - real product conversation enters central support inbox
 
+## Strategic Reset After Sprint 19
+
+The first 19 sprints created the operating spine for support, approvals, department agents, work queue, daily brief, and reviewed-today tracking.
+
+The next sprint sequence must add the missing growth layer:
+
+```text
+Product Marketing -> Social Media Drafts -> Campaign Calendar -> Sales Follow-up -> Marketing Analytics
+```
+
+## Sprint 20 - Marketing Foundation
+
+Deliver:
+
+- marketing profile model
+- campaign model
+- social content draft model
+- channel list
+- product positioning fields
+- approval status for marketing drafts
+
+Exit criteria:
+
+- each product can have marketing positioning and social channel settings
+- content/campaign records can be created without public posting
+
+## Sprint 21 - Social Media Draft Workflow
+
+Deliver:
+
+- Product Marketing Agent workflow
+- Social Media Content Agent workflow
+- draft posts by product and channel
+- reusable campaign context
+- approval-ready marketing drafts
+
+Exit criteria:
+
+- AI can draft social posts for human review
+- no public publishing happens automatically
+
+## Sprint 22 - Campaign Calendar
+
+Deliver:
+
+- calendar/list view of planned content
+- product/channel filters
+- campaign status
+- content status
+- links to approval workflow
+
+Exit criteria:
+
+- operator can see what content is planned, drafted, approved, or blocked
+
+## Sprint 23 - Sales Follow-up Workflow
+
+Deliver:
+
+- lead follow-up draft workflow
+- campaign/source context
+- product interest tracking
+- human-reviewed follow-up drafts
+
+Exit criteria:
+
+- sales follow-up becomes trackable without becoming a full CRM
+
+## Sprint 24 - Marketing Analytics
+
+Deliver:
+
+- campaign count
+- draft/approved/published status counts
+- channel breakdown
+- product marketing activity
+- placeholders for future connector metrics
+
+Exit criteria:
+
+- owner can see whether marketing work is happening and where it is blocked

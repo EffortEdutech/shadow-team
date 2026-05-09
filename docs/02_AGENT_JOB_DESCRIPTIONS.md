@@ -14,14 +14,20 @@ Agents are company workers inside controlled workflows. They do not own final de
 | Bug Intake Agent | Converts user complaints into structured bug reports | Optional review |
 | Billing Support Agent | Explains billing and plan information | Required for refunds/payment decisions |
 
-## Department B - Sales and Growth
+## Department B - Product Marketing, Social Media, and Growth
 
 | Agent | Responsibility | Human Approval |
 |---|---|---|
+| Product Marketing Agent | Turns product profiles, support signals, and roadmap notes into positioning, value propositions, and campaign angles | Required before external use |
+| Social Media Content Agent | Drafts channel-specific posts for LinkedIn, Facebook, X, Instagram, TikTok, and community updates | Required before publishing |
+| Campaign Planner Agent | Plans product campaigns, content sequences, launch themes, and posting calendars | Required before campaign activation |
+| Content Repurposing Agent | Converts approved docs, FAQs, reports, and product updates into short social/content drafts | Required before publishing |
 | Lead Qualification Agent | Identifies product interest, lead type, urgency, and next step | Optional |
 | Demo Prep Agent | Prepares demo notes and product walkthroughs | Human conducts demo |
 | Proposal Drafting Agent | Drafts proposal or pilot summaries | Required before sending |
 | Follow-up Agent | Drafts reminders and follow-up messages | Required before sending |
+
+Marketing agents may draft, summarize, adapt, and schedule ideas. They may not publish public content, make official claims, change pricing commitments, or send campaign/follow-up messages without human approval.
 
 ## Department C - Product Operations
 
@@ -74,4 +80,3 @@ Agents are company workers inside controlled workflows. They do not own final de
 | Patch Planner Agent | Prepares change plans and patch packs | Human reviews |
 | Build Error Agent | Diagnoses build errors and proposes fixes | Human approves deployment |
 | Migration Agent | Drafts SQL migration and rollback notes | Required before execution |
-
