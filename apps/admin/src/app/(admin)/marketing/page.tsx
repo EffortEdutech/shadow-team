@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { StateCard } from "@/components/ui/state-card";
@@ -141,6 +142,15 @@ export default async function MarketingPage() {
         title="Marketing"
         description="Draft-only product marketing foundation for positioning, campaigns, social content, and human-approved publishing later."
       />
+
+      <div className="mb-6 flex flex-wrap gap-3">
+        <Link
+          href="/marketing/calendar"
+          className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-panel px-3 text-sm font-medium hover:bg-panel-strong"
+        >
+          Campaign Calendar
+        </Link>
+      </div>
 
       {loadError ? (
         <StateCard

@@ -40,6 +40,7 @@ This folder is the planning source of truth for Sprint 0.
 | `30_STRATEGY_RESET_MARKETING_OPERATIONS_LAYER.md` | Strategy reset for product marketing and social media marketing |
 | `31_SPRINT_20_MARKETING_FOUNDATION.md` | Marketing Foundation notes |
 | `32_SPRINT_21_SOCIAL_MEDIA_DRAFT_WORKFLOW.md` | Social Media Draft Workflow notes |
+| `33_SPRINT_22_CAMPAIGN_CALENDAR.md` | Campaign Calendar notes |
 
 ## Product Profiles
 

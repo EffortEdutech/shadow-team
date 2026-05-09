@@ -370,6 +370,20 @@ Included:
 - audit events
 - no public publishing
 
+## Sprint 22 Status
+
+Sprint 22 adds the Campaign Calendar.
+
+Included:
+
+- `/marketing/calendar` page
+- Campaign Calendar link from Marketing
+- product, channel, and status filters
+- planned content grouped by date
+- unscheduled content visibility
+- campaign side panel
+- read-only planning view
+
 Useful commands:
 
 ```powershell
