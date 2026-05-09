@@ -199,6 +199,21 @@ Included:
 - audit events for QA checklist requests
 - human QA review before release evidence
 
+## Sprint 13 Status
+
+Sprint 13 adds the Product Manager Agent workflow.
+
+Included:
+
+- Product Manager Agent form on the Agents page
+- product and planning focus input
+- support, ticket, knowledge, QA, and agent-run context
+- AI-generated draft backlog suggestions
+- draft `backlog_suggestion` knowledge sources
+- agent run and tool-call logging
+- audit events for product planning requests
+- human product-owner approval before roadmap commitment
+
 Useful commands:
 
 ```powershell
