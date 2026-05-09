@@ -465,6 +465,15 @@ export async function addConversationMessage(formData: FormData) {
   }
 
   const normalizedSenderType = senderType === "note" ? "note" : "human";
+  const { data: conversation } = await supabase
+    .from("conversations")
+    .select("metadata_json")
+    .eq("id", conversationId)
+    .maybeSingle<{ metadata_json: Record<string, unknown> | null }>();
+  const connector =
+    typeof conversation?.metadata_json?.connector === "string"
+      ? conversation.metadata_json.connector
+      : null;
 
   const { error: messageError } = await supabase.from("messages").insert({
     conversation_id: conversationId,
@@ -476,6 +485,7 @@ export async function addConversationMessage(formData: FormData) {
       normalizedSenderType === "human"
         ? {
             connector_outbox: true,
+            connector,
             delivery_status: "pending",
           }
         : {

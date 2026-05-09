@@ -86,7 +86,10 @@ type ConnectorDatabase = {
           channel_message_id?: string | null;
           metadata_json?: Json;
         };
-        Update: Record<string, never>;
+        Update: {
+          metadata_json?: Json;
+          channel_message_id?: string | null;
+        };
         Relationships: [];
       };
       audit_events: {

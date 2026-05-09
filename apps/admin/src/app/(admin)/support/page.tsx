@@ -57,6 +57,12 @@ function senderTone(senderType: Message["sender_type"]) {
   return "neutral";
 }
 
+function deliveryTone(value: unknown): "success" | "warning" | "danger" {
+  if (value === "delivered") return "success";
+  if (value === "failed") return "danger";
+  return "warning";
+}
+
 function contactLabel(contact: ContactProfile | null) {
   return contact?.name || contact?.email || contact?.phone || "Unknown contact";
 }
@@ -288,7 +294,7 @@ export default async function SupportPage({
         supabase
           .from("messages")
           .select(
-            "id, conversation_id, sender_type, sender_id, content, visibility, created_at",
+            "id, conversation_id, sender_type, sender_id, content, visibility, channel_message_id, metadata_json, created_at",
           )
           .eq("conversation_id", activeConversation.id)
           .order("created_at", { ascending: true })
@@ -465,6 +471,19 @@ export default async function SupportPage({
                         <span className="text-xs text-muted">
                           {formatDate(message.created_at)}
                         </span>
+                        {message.sender_type === "human" &&
+                        message.metadata_json?.connector_outbox ? (
+                          <Badge
+                            tone={deliveryTone(
+                              message.metadata_json.delivery_status,
+                            )}
+                          >
+                            {typeof message.metadata_json.delivery_status ===
+                            "string"
+                              ? message.metadata_json.delivery_status
+                              : "pending"}
+                          </Badge>
+                        ) : null}
                       </div>
                       <p className="whitespace-pre-wrap text-sm leading-6">
                         {message.content}

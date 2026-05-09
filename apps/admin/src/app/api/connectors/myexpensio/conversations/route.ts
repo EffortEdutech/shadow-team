@@ -344,7 +344,7 @@ export async function GET(request: NextRequest) {
 
   let messagesQuery = supabase
     .from("messages")
-    .select("id, content, created_at, channel_message_id")
+    .select("id, content, created_at, channel_message_id, metadata_json")
     .eq("conversation_id", conversation.id)
     .eq("sender_type", "human")
     .eq("visibility", "external")
@@ -361,6 +361,7 @@ export async function GET(request: NextRequest) {
         content: string;
         created_at: string;
         channel_message_id: string | null;
+        metadata_json: Record<string, unknown> | null;
       }>
     >();
 
@@ -380,6 +381,18 @@ export async function GET(request: NextRequest) {
     createdAt: message.created_at,
     cursor: message.created_at,
     channelMessageId: message.channel_message_id,
+    deliveryStatus:
+      typeof message.metadata_json?.delivery_status === "string"
+        ? message.metadata_json.delivery_status
+        : "pending",
+    deliveredAt:
+      typeof message.metadata_json?.delivered_at === "string"
+        ? message.metadata_json.delivered_at
+        : null,
+    deliveryError:
+      typeof message.metadata_json?.delivery_error === "string"
+        ? message.metadata_json.delivery_error
+        : null,
   }));
 
   return NextResponse.json({

@@ -65,6 +65,8 @@ export type Message = {
   sender_id: string | null;
   content: string;
   visibility: "external" | "internal";
+  channel_message_id: string | null;
+  metadata_json: Record<string, unknown>;
   created_at: string;
 };
 

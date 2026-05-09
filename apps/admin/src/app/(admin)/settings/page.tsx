@@ -18,14 +18,66 @@ export default async function SettingsPage() {
     (user?.user_metadata?.shadow_team_role as string | undefined) ??
     "unassigned";
 
-  const [{ count: productCount }, { count: profileCount }, { count: agentCount }] =
-    await Promise.all([
+  const [
+    { count: productCount },
+    { count: profileCount },
+    { count: agentCount },
+    myExpensioProductResult,
+  ] = await Promise.all([
       supabase.from("products").select("*", { count: "exact", head: true }),
       supabase
         .from("product_profiles")
         .select("*", { count: "exact", head: true }),
       supabase.from("agents").select("*", { count: "exact", head: true }),
+      supabase.from("products").select("id").eq("slug", "myexpensio").single<{
+        id: string;
+      }>(),
     ]);
+
+  const myExpensioProductId = myExpensioProductResult.data?.id ?? null;
+  const [
+    { count: connectorConversationCount },
+    { count: pendingReplyCount },
+    { count: deliveredReplyCount },
+    { count: failedReplyCount },
+  ] = myExpensioProductId
+    ? await Promise.all([
+        supabase
+          .from("conversations")
+          .select("*", { count: "exact", head: true })
+          .eq("product_id", myExpensioProductId)
+          .eq("metadata_json->>connector", "myexpensio"),
+        supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("sender_type", "human")
+          .eq("visibility", "external")
+          .eq("metadata_json->>connector", "myexpensio")
+          .eq("metadata_json->>connector_outbox", "true")
+          .eq("metadata_json->>delivery_status", "pending"),
+        supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("sender_type", "human")
+          .eq("visibility", "external")
+          .eq("metadata_json->>connector", "myexpensio")
+          .eq("metadata_json->>connector_outbox", "true")
+          .eq("metadata_json->>delivery_status", "delivered"),
+        supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("sender_type", "human")
+          .eq("visibility", "external")
+          .eq("metadata_json->>connector", "myexpensio")
+          .eq("metadata_json->>connector_outbox", "true")
+          .eq("metadata_json->>delivery_status", "failed"),
+      ])
+    : [
+        { count: 0 },
+        { count: 0 },
+        { count: 0 },
+        { count: 0 },
+      ];
 
   const rows = [
     ["Supabase project", "mzcdnvtmwyarcefbroja"],
@@ -62,7 +114,28 @@ export default async function SettingsPage() {
           ))}
         </div>
       </section>
+
+      <section className="mt-4 overflow-hidden rounded-lg border border-border bg-panel shadow-sm">
+        <div className="border-b border-border bg-panel-strong px-5 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-base font-semibold">MyExpensio Connector</h2>
+            <Badge tone="success">active</Badge>
+          </div>
+        </div>
+        <div className="grid gap-0 divide-y divide-border md:grid-cols-4 md:divide-x md:divide-y-0">
+          {[
+            ["Connector conversations", connectorConversationCount ?? 0],
+            ["Pending replies", pendingReplyCount ?? 0],
+            ["Delivered replies", deliveredReplyCount ?? 0],
+            ["Failed replies", failedReplyCount ?? 0],
+          ].map(([label, value]) => (
+            <div key={label} className="px-5 py-4">
+              <p className="text-xs font-medium text-muted">{label}</p>
+              <p className="mt-2 text-2xl font-semibold">{value}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </>
   );
 }
-

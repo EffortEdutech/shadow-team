@@ -139,6 +139,19 @@ Included:
 - internal notes and AI drafts excluded
 - `outboxUrl` returned from inbound connector creation
 
+## Sprint 9 Status
+
+Sprint 9 adds delivery acknowledgement for the MyExpensio connector.
+
+Included:
+
+- delivery acknowledgement API
+- delivered/failed status stored on reply messages
+- delivery status included in outbox responses
+- delivery badges in Support Inbox
+- MyExpensio connector counts in Settings
+- audit event for delivery acknowledgements
+
 Useful commands:
 
 ```powershell
