@@ -275,6 +275,25 @@ Included:
 - open tickets queue
 - read-only links back to source workflows
 
+## Sprint 18 Status
+
+Sprint 18 turns the Dashboard into a Daily Brief / Operator Dashboard.
+
+Included:
+
+- `/dashboard` daily brief
+- needs-attention summary cards
+- high-priority support overview
+- pending approval overview
+- AI runs in the last 24 hours
+- morning readout with top-risk callouts
+- release gate panel
+- failed connector delivery panel
+- high-risk AI review panel
+- stale conversation panel
+- open tickets panel
+- read-only links into source workflows
+
 Useful commands:
 
 ```powershell

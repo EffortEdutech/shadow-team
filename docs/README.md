@@ -35,6 +35,7 @@ This folder is the planning source of truth for Sprint 0.
 | `25_SPRINT_15_APPROVALS_INBOX.md` | Approvals Inbox notes |
 | `26_SPRINT_16_RELEASE_READINESS_GATE.md` | Release Readiness Gate notes |
 | `27_SPRINT_17_HUMAN_WORK_QUEUE.md` | Human Work Queue notes |
+| `28_SPRINT_18_DAILY_BRIEF_OPERATOR_DASHBOARD.md` | Daily Brief and Operator Dashboard notes |
 
 ## Product Profiles
 
