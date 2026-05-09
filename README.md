@@ -214,6 +214,21 @@ Included:
 - audit events for product planning requests
 - human product-owner approval before roadmap commitment
 
+## Sprint 14 Status
+
+Sprint 14 adds the Management Report Agent workflow.
+
+Included:
+
+- Management Report Agent form on the Agents page
+- company-wide or product-specific report scope
+- support, connector, AI, knowledge, QA, and planning context
+- AI-generated draft owner/admin brief
+- draft `management_report` knowledge sources
+- agent run and tool-call logging
+- audit events for management report requests
+- human owner/admin review before sharing
+
 Useful commands:
 
 ```powershell

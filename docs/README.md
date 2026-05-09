@@ -31,6 +31,7 @@ This folder is the planning source of truth for Sprint 0.
 | `21_SPRINT_11_KNOWLEDGE_CURATOR_WORKFLOW.md` | Knowledge Curator workflow notes |
 | `22_SPRINT_12_QA_CHECKLIST_WORKFLOW.md` | QA Checklist Agent workflow notes |
 | `23_SPRINT_13_PRODUCT_MANAGER_WORKFLOW.md` | Product Manager Agent workflow notes |
+| `24_SPRINT_14_MANAGEMENT_REPORT_WORKFLOW.md` | Management Report Agent workflow notes |
 
 ## Product Profiles
 

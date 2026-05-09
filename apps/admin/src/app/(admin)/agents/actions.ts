@@ -77,6 +77,31 @@ const ProductManagerDraft = z.object({
   humanApprovalRequired: z.boolean(),
 });
 
+const ManagementReportDraft = z.object({
+  title: z.string().min(1).max(180),
+  executiveSummary: z.string().min(1),
+  supportSummary: z.array(z.string()).min(1),
+  connectorSummary: z.array(z.string()).min(1),
+  aiOperationsSummary: z.array(z.string()).min(1),
+  knowledgeSummary: z.array(z.string()).min(1),
+  qaAndPlanningSummary: z.array(z.string()).min(1),
+  risks: z.array(z.string()).min(1),
+  recommendedActions: z
+    .array(
+      z.object({
+        action: z.string().min(1),
+        owner: z.string().min(1),
+        priority: z.enum(["low", "medium", "high"]),
+        reason: z.string().min(1),
+      }),
+    )
+    .min(1),
+  openQuestions: z.array(z.string()).min(1),
+  confidence: z.number().min(0).max(1),
+  riskLevel: z.enum(["low", "medium", "high", "critical"]),
+  humanApprovalRequired: z.boolean(),
+});
+
 function formatChecklist(parsed: z.infer<typeof QaChecklistDraft>) {
   const checklist = parsed.testChecklist
     .map(
@@ -139,6 +164,41 @@ function formatBacklogPlan(parsed: z.infer<typeof ProductManagerDraft>) {
     ...parsed.nextQuestions.map((item) => `- ${item}`),
     "",
     "Status: draft only. Human product owner approval required before roadmap or sprint commitment.",
+  ].join("\n");
+}
+
+function formatManagementReport(parsed: z.infer<typeof ManagementReportDraft>) {
+  return [
+    `Executive summary: ${parsed.executiveSummary}`,
+    "",
+    "Support summary:",
+    ...parsed.supportSummary.map((item) => `- ${item}`),
+    "",
+    "Connector summary:",
+    ...parsed.connectorSummary.map((item) => `- ${item}`),
+    "",
+    "AI operations summary:",
+    ...parsed.aiOperationsSummary.map((item) => `- ${item}`),
+    "",
+    "Knowledge summary:",
+    ...parsed.knowledgeSummary.map((item) => `- ${item}`),
+    "",
+    "QA and planning summary:",
+    ...parsed.qaAndPlanningSummary.map((item) => `- ${item}`),
+    "",
+    "Risks:",
+    ...parsed.risks.map((item) => `- ${item}`),
+    "",
+    "Recommended actions:",
+    ...parsed.recommendedActions.map(
+      (item) =>
+        `- [${item.priority}] ${item.action} (Owner: ${item.owner}) - ${item.reason}`,
+    ),
+    "",
+    "Open questions:",
+    ...parsed.openQuestions.map((item) => `- ${item}`),
+    "",
+    "Status: draft only. Human owner/admin review required before sharing outside the owner/admin team.",
   ].join("\n");
 }
 
@@ -679,5 +739,350 @@ export async function generateProductManagerDraft(formData: FormData) {
   });
 
   revalidatePath("/agents");
+  revalidatePath("/knowledge");
+}
+
+export async function generateManagementReportDraft(formData: FormData) {
+  const { supabase, userId } = await getSignedInUserId();
+  const openai = getOpenAIClient();
+
+  const productId = readString(formData, "productId") || null;
+  const reportFocus = readString(formData, "reportFocus") || "weekly owner brief";
+  const period = readString(formData, "period") || "last 7 days";
+  const notes = readString(formData, "notes");
+
+  if (!openai) {
+    throw new Error("OPENAI_API_KEY is not configured.");
+  }
+
+  const [
+    productResult,
+    productsResult,
+    conversationsResult,
+    ticketsResult,
+    messagesResult,
+    knowledgeResult,
+    agentRunsResult,
+    agentResult,
+  ] = await Promise.all([
+    productId
+      ? supabase
+          .from("products")
+          .select("id, name, slug, risk_level, first_ai_use_case")
+          .eq("id", productId)
+          .single<{
+            id: string;
+            name: string;
+            slug: string;
+            risk_level: string;
+            first_ai_use_case: string | null;
+          }>()
+      : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from("products")
+      .select("id, name, slug, risk_level, first_ai_use_case")
+      .order("priority", { ascending: true })
+      .returns<
+        Array<{
+          id: string;
+          name: string;
+          slug: string;
+          risk_level: string;
+          first_ai_use_case: string | null;
+        }>
+      >(),
+    supabase
+      .from("conversations")
+      .select("product_id, status, priority, ai_status, subject, last_message_preview, created_at, products(slug)")
+      .match(productId ? { product_id: productId } : {})
+      .order("created_at", { ascending: false })
+      .limit(40)
+      .returns<
+        Array<{
+          product_id: string | null;
+          status: string;
+          priority: string;
+          ai_status: string;
+          subject: string | null;
+          last_message_preview: string | null;
+          created_at: string;
+          products: { slug: string } | null;
+        }>
+      >(),
+    supabase
+      .from("tickets")
+      .select("product_id, category, status, priority, summary, created_at, products(slug)")
+      .match(productId ? { product_id: productId } : {})
+      .order("created_at", { ascending: false })
+      .limit(30)
+      .returns<
+        Array<{
+          product_id: string | null;
+          category: string;
+          status: string;
+          priority: string;
+          summary: string;
+          created_at: string;
+          products: { slug: string } | null;
+        }>
+      >(),
+    supabase
+      .from("messages")
+      .select("sender_type, visibility, metadata_json, created_at")
+      .order("created_at", { ascending: false })
+      .limit(80)
+      .returns<
+        Array<{
+          sender_type: string;
+          visibility: string;
+          metadata_json: Record<string, unknown>;
+          created_at: string;
+        }>
+      >(),
+    supabase
+      .from("knowledge_sources")
+      .select("product_id, source_type, source_title, status, metadata_json, created_at, products(slug)")
+      .match(productId ? { product_id: productId } : {})
+      .order("created_at", { ascending: false })
+      .limit(40)
+      .returns<
+        Array<{
+          product_id: string | null;
+          source_type: string;
+          source_title: string;
+          status: string;
+          metadata_json: Record<string, unknown>;
+          created_at: string;
+          products: { slug: string } | null;
+        }>
+      >(),
+    supabase
+      .from("agent_runs")
+      .select("product_id, confidence, risk_level, human_required, status, output_json, created_at, agents(name), products(slug)")
+      .match(productId ? { product_id: productId } : {})
+      .order("created_at", { ascending: false })
+      .limit(40)
+      .returns<
+        Array<{
+          product_id: string | null;
+          confidence: number | null;
+          risk_level: string;
+          human_required: boolean;
+          status: string;
+          output_json: Record<string, unknown>;
+          created_at: string;
+          agents: { name: string } | null;
+          products: { slug: string } | null;
+        }>
+      >(),
+    supabase
+      .from("agents")
+      .select("id")
+      .eq("name", "Management Report Agent")
+      .maybeSingle<{ id: string }>(),
+  ]);
+
+  for (const result of [
+    productResult,
+    productsResult,
+    conversationsResult,
+    ticketsResult,
+    messagesResult,
+    knowledgeResult,
+    agentRunsResult,
+  ]) {
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+  }
+
+  const messages = messagesResult.data ?? [];
+  const knowledge = knowledgeResult.data ?? [];
+  const agentRuns = agentRunsResult.data ?? [];
+  const deliveryCounts = {
+    pending: messages.filter(
+      (message) => message.metadata_json?.delivery_status === "pending",
+    ).length,
+    delivered: messages.filter(
+      (message) => message.metadata_json?.delivery_status === "delivered",
+    ).length,
+    failed: messages.filter(
+      (message) => message.metadata_json?.delivery_status === "failed",
+    ).length,
+  };
+  const knowledgeTypeCounts = knowledge.reduce<Record<string, number>>(
+    (acc, source) => {
+      acc[source.source_type] = (acc[source.source_type] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
+  const agentRunCounts = agentRuns.reduce<Record<string, number>>((acc, run) => {
+    const name = run.agents?.name ?? "Unknown agent";
+    acc[name] = (acc[name] ?? 0) + 1;
+    return acc;
+  }, {});
+  const model = getOpenAIModel();
+
+  const response = await openai.responses.parse({
+    model,
+    input: [
+      {
+        role: "system",
+        content:
+          "You are Shadow Team's Management Report Agent. Create concise owner/admin operating briefs from system signals. Do not make financial, legal, product, release, hiring, pricing, refund, certification, or roadmap decisions. Recommend actions for human review only.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify(
+          {
+            reportFocus,
+            period,
+            notes,
+            selectedProduct: productResult.data,
+            products: productsResult.data ?? [],
+            conversations: conversationsResult.data ?? [],
+            tickets: ticketsResult.data ?? [],
+            deliveryCounts,
+            knowledgeSources: knowledge,
+            knowledgeTypeCounts,
+            agentRuns,
+            agentRunCounts,
+            outputRules: {
+              executiveSummary:
+                "Write a short, practical owner/admin summary.",
+              recommendedActions:
+                "Every action must have owner, priority, and reason. No final decisions.",
+              humanApprovalRequired: "Always true.",
+            },
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+    text: {
+      format: zodTextFormat(ManagementReportDraft, "management_report_draft"),
+    },
+  });
+
+  const parsed = response.output_parsed;
+
+  if (!parsed) {
+    throw new Error("Management Report Agent did not return a parsed report.");
+  }
+
+  const { data: agentRun, error: agentRunError } = await supabase
+    .from("agent_runs")
+    .insert({
+      agent_id: agentResult.data?.id ?? null,
+      product_id: productId,
+      input_json: {
+        model,
+        report_focus: reportFocus,
+        period,
+        selected_product_slug: productResult.data?.slug ?? null,
+        conversation_count: conversationsResult.data?.length ?? 0,
+        ticket_count: ticketsResult.data?.length ?? 0,
+        knowledge_count: knowledge.length,
+        agent_run_count: agentRuns.length,
+      },
+      output_json: parsed,
+      confidence: parsed.confidence,
+      risk_level: parsed.riskLevel,
+      human_required: true,
+      status: "completed",
+    })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (agentRunError) {
+    throw new Error(agentRunError.message);
+  }
+
+  const { data: source, error: sourceError } = await supabase
+    .from("knowledge_sources")
+    .insert({
+      product_id: productId,
+      source_type: "management_report",
+      source_title: parsed.title,
+      source_path: null,
+      status: "draft",
+      version: "v0.1",
+      metadata_json: {
+        created_from: "management_report_agent",
+        agent_run_id: agentRun.id,
+        report_focus: reportFocus,
+        period,
+        human_approval_required: parsed.humanApprovalRequired,
+      },
+    })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (sourceError) {
+    throw new Error(sourceError.message);
+  }
+
+  const { error: chunkError } = await supabase.from("knowledge_chunks").insert({
+    source_id: source.id,
+    chunk_text: formatManagementReport(parsed),
+    metadata_json: {
+      chunk_type: "management_report_agent_draft",
+      agent_run_id: agentRun.id,
+    },
+  });
+
+  if (chunkError) {
+    throw new Error(chunkError.message);
+  }
+
+  await supabase.from("agent_tool_calls").insert({
+    agent_run_id: agentRun.id,
+    tool_name: "create_draft_management_report",
+    input_json: {
+      product_id: productId,
+      report_focus: reportFocus,
+      period,
+    },
+    output_json: {
+      knowledge_source_id: source.id,
+      title: parsed.title,
+      recommended_action_count: parsed.recommendedActions.length,
+      status: "draft",
+    },
+    status: "completed",
+  });
+
+  await supabase.from("audit_events").insert({
+    product_id: productId,
+    actor_type: "ai",
+    event_type: "management_report_draft_created",
+    entity_type: "knowledge_source",
+    entity_id: source.id,
+    metadata_json: {
+      agent_run_id: agentRun.id,
+      risk_level: parsed.riskLevel,
+      confidence: parsed.confidence,
+      recommended_action_count: parsed.recommendedActions.length,
+    },
+  });
+
+  await supabase.from("audit_events").insert({
+    product_id: productId,
+    actor_type: "human",
+    actor_id: userId,
+    event_type: "management_report_requested",
+    entity_type: "knowledge_source",
+    entity_id: source.id,
+    metadata_json: {
+      agent_run_id: agentRun.id,
+      report_focus: reportFocus,
+      period,
+    },
+  });
+
+  revalidatePath("/agents");
+  revalidatePath("/analytics");
   revalidatePath("/knowledge");
 }

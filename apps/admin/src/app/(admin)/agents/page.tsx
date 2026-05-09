@@ -11,6 +11,7 @@ import type {
   Product,
 } from "@/lib/types";
 import {
+  generateManagementReportDraft,
   generateProductManagerDraft,
   generateQaChecklistDraft,
 } from "./actions";
@@ -32,6 +33,13 @@ type QaChecklistRow = Pick<
 };
 
 type BacklogSuggestionRow = Pick<
+  KnowledgeSource,
+  "id" | "source_title" | "status" | "created_at" | "metadata_json"
+> & {
+  products: Pick<Product, "slug"> | null;
+};
+
+type ManagementReportRow = Pick<
   KnowledgeSource,
   "id" | "source_title" | "status" | "created_at" | "metadata_json"
 > & {
@@ -76,6 +84,7 @@ export default async function AgentsPage() {
 
   const [
     { data: products },
+    { data: managementReports },
     { data: qaChecklists },
     { data: backlogSuggestions },
   ] = await Promise.all([
@@ -84,6 +93,13 @@ export default async function AgentsPage() {
       .select("id, name, slug, status, priority, risk_level, first_ai_use_case")
       .order("priority", { ascending: true })
       .returns<Product[]>(),
+    supabase
+      .from("knowledge_sources")
+      .select("id, source_title, status, created_at, metadata_json, products(slug)")
+      .eq("source_type", "management_report")
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .returns<ManagementReportRow[]>(),
     supabase
       .from("knowledge_sources")
       .select("id, source_title, status, created_at, metadata_json, products(slug)")
@@ -106,6 +122,118 @@ export default async function AgentsPage() {
         title="Agents"
         description="Department agent profiles, operating boundaries, prompt versions, and product access."
       />
+
+      <section className="mb-6 rounded-lg border border-border bg-panel p-5 shadow-sm">
+        <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold">Management Report Agent</h2>
+              <Badge>draft workflow</Badge>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Generate an owner/admin brief from support, connector, AI,
+              knowledge, QA, and planning activity. Human review is required.
+            </p>
+          </div>
+
+          <form action={generateManagementReportDraft} className="grid gap-3 lg:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Scope
+              </span>
+              <select
+                name="productId"
+                className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+              >
+                <option value="">Company-wide</option>
+                {(products ?? []).map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Period
+              </span>
+              <input
+                name="period"
+                defaultValue="last 7 days"
+                className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+              />
+            </label>
+
+            <label className="block lg:col-span-2">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Report focus
+              </span>
+              <input
+                name="reportFocus"
+                defaultValue="weekly owner brief"
+                className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+              />
+            </label>
+
+            <label className="block lg:col-span-2">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Notes
+              </span>
+              <textarea
+                name="notes"
+                rows={4}
+                className="w-full resize-none rounded-md border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Mention priorities, concerns, decisions to avoid, or what the owner should focus on..."
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong lg:col-span-2"
+            >
+              Generate management report
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section className="mb-6 overflow-hidden rounded-lg border border-border bg-panel shadow-sm">
+        <div className="border-b border-border bg-panel-strong px-5 py-4">
+          <h2 className="text-base font-semibold">Recent Management Reports</h2>
+          <p className="mt-1 text-sm text-muted">
+            Draft owner/admin briefs created by the Management Report Agent.
+          </p>
+        </div>
+        {(managementReports ?? []).length === 0 ? (
+          <div className="p-5">
+            <StateCard
+              title="No management reports yet"
+              description="Generate the first draft owner brief from the Management Report Agent panel."
+            />
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {(managementReports ?? []).map((report) => (
+              <div
+                key={report.id}
+                className="grid gap-3 px-5 py-4 text-sm md:grid-cols-[1fr_auto]"
+              >
+                <div>
+                  <p className="font-medium">{report.source_title}</p>
+                  <p className="mt-1 text-muted">
+                    {report.products?.slug ?? "company-wide"} -{" "}
+                    {typeof report.metadata_json.period === "string"
+                      ? report.metadata_json.period
+                      : "period"}
+                  </p>
+                </div>
+                <Badge>{report.status}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="mb-6 rounded-lg border border-border bg-panel p-5 shadow-sm">
         <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
