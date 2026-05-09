@@ -3,7 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { StateCard } from "@/components/ui/state-card";
 import { getDepartmentAgentProfile } from "@/lib/agent-profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { Agent, AgentProductAccess, AgentRun, Product } from "@/lib/types";
+import type {
+  Agent,
+  AgentProductAccess,
+  AgentRun,
+  KnowledgeSource,
+  Product,
+} from "@/lib/types";
+import { generateQaChecklistDraft } from "./actions";
 
 type AgentWithAccess = Agent & {
   agent_product_access: AgentProductAccess[];
@@ -11,6 +18,13 @@ type AgentWithAccess = Agent & {
 
 type AgentRunRow = AgentRun & {
   agents: Pick<Agent, "name"> | null;
+  products: Pick<Product, "slug"> | null;
+};
+
+type QaChecklistRow = Pick<
+  KnowledgeSource,
+  "id" | "source_title" | "status" | "created_at" | "metadata_json"
+> & {
   products: Pick<Product, "slug"> | null;
 };
 
@@ -50,12 +64,130 @@ export default async function AgentsPage() {
     .limit(10)
     .returns<AgentRunRow[]>();
 
+  const [{ data: products }, { data: qaChecklists }] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, slug, status, priority, risk_level, first_ai_use_case")
+      .order("priority", { ascending: true })
+      .returns<Product[]>(),
+    supabase
+      .from("knowledge_sources")
+      .select("id, source_title, status, created_at, metadata_json, products(slug)")
+      .eq("source_type", "qa_checklist")
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .returns<QaChecklistRow[]>(),
+  ]);
+
   return (
     <>
       <PageHeader
         title="Agents"
         description="Department agent profiles, operating boundaries, prompt versions, and product access."
       />
+
+      <section className="mb-6 rounded-lg border border-border bg-panel p-5 shadow-sm">
+        <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold">QA Checklist Agent</h2>
+              <Badge>draft workflow</Badge>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Generate a draft manual test checklist from a product and feature
+              scope. The output is saved as draft knowledge for human QA review.
+            </p>
+          </div>
+
+          <form action={generateQaChecklistDraft} className="grid gap-3 lg:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Product
+              </span>
+              <select
+                name="productId"
+                required
+                className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+              >
+                <option value="">Select product</option>
+                {(products ?? []).map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Feature scope
+              </span>
+              <input
+                name="featureScope"
+                required
+                className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+                placeholder="Payment failed connector flow"
+              />
+            </label>
+
+            <label className="block lg:col-span-2">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Notes
+              </span>
+              <textarea
+                name="notes"
+                rows={4}
+                className="w-full resize-none rounded-md border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Include important paths, edge cases, or release concerns..."
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong lg:col-span-2"
+            >
+              Generate QA checklist
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section className="mb-6 overflow-hidden rounded-lg border border-border bg-panel shadow-sm">
+        <div className="border-b border-border bg-panel-strong px-5 py-4">
+          <h2 className="text-base font-semibold">Recent QA Checklists</h2>
+          <p className="mt-1 text-sm text-muted">
+            Draft release checklists created by the QA Checklist Agent.
+          </p>
+        </div>
+        {(qaChecklists ?? []).length === 0 ? (
+          <div className="p-5">
+            <StateCard
+              title="No QA checklists yet"
+              description="Generate the first draft checklist from the QA Checklist Agent panel."
+            />
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {(qaChecklists ?? []).map((checklist) => (
+              <div
+                key={checklist.id}
+                className="grid gap-3 px-5 py-4 text-sm md:grid-cols-[1fr_auto]"
+              >
+                <div>
+                  <p className="font-medium">{checklist.source_title}</p>
+                  <p className="mt-1 text-muted">
+                    {checklist.products?.slug ?? "company-wide"} -{" "}
+                    {typeof checklist.metadata_json.feature_scope === "string"
+                      ? checklist.metadata_json.feature_scope
+                      : "feature scope"}
+                  </p>
+                </div>
+                <Badge>{checklist.status}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {error ? (
         <StateCard

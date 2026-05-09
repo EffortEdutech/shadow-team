@@ -184,6 +184,21 @@ Included:
 - audit events for curator requests
 - human approval before knowledge is approved
 
+## Sprint 12 Status
+
+Sprint 12 adds the QA Checklist Agent workflow.
+
+Included:
+
+- QA Checklist Agent form on the Agents page
+- product and feature scope input
+- recent ticket and conversation context
+- AI-generated draft manual test checklists
+- draft `qa_checklist` knowledge sources
+- agent run and tool-call logging
+- audit events for QA checklist requests
+- human QA review before release evidence
+
 Useful commands:
 
 ```powershell

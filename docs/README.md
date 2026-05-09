@@ -29,6 +29,7 @@ This folder is the planning source of truth for Sprint 0.
 | `19_SPRINT_9_DELIVERY_ACKNOWLEDGEMENT.md` | Connector delivery acknowledgement notes |
 | `20_SPRINT_10_DEPARTMENT_AGENT_PROFILES.md` | Department agent profile notes |
 | `21_SPRINT_11_KNOWLEDGE_CURATOR_WORKFLOW.md` | Knowledge Curator workflow notes |
+| `22_SPRINT_12_QA_CHECKLIST_WORKFLOW.md` | QA Checklist Agent workflow notes |
 
 ## Product Profiles
 
