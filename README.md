@@ -229,6 +229,21 @@ Included:
 - audit events for management report requests
 - human owner/admin review before sharing
 
+## Sprint 15 Status
+
+Sprint 15 adds the Approvals Inbox.
+
+Included:
+
+- `/approvals` page
+- Approvals navigation item
+- review queue for AI-created operating drafts
+- approve, reject/archive, or keep draft decisions
+- approval notes stored in metadata
+- status updates for AI-created knowledge sources
+- audit events for approval decisions
+- central human control before AI outputs become official assets
+
 Useful commands:
 
 ```powershell

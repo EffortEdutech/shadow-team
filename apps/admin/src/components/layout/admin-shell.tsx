@@ -7,6 +7,7 @@ import {
   BarChart3,
   BookOpen,
   Bot,
+  CheckSquare,
   Inbox,
   LayoutDashboard,
   Menu,
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/tickets", label: "Tickets", icon: Ticket },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen },
+  { href: "/approvals", label: "Approvals", icon: CheckSquare },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
