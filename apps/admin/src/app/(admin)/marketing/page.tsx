@@ -156,6 +156,12 @@ export default async function MarketingPage() {
         >
           Sales Follow-ups
         </Link>
+        <Link
+          href="/marketing/analytics"
+          className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-panel px-3 text-sm font-medium hover:bg-panel-strong"
+        >
+          Marketing Analytics
+        </Link>
       </div>
 
       {loadError ? (

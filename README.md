@@ -400,6 +400,20 @@ Included:
 - agent run and tool-call logging
 - no outbound sending
 
+## Sprint 24 Status
+
+Sprint 24 adds Marketing Analytics.
+
+Included:
+
+- `/marketing/analytics` page
+- Marketing Analytics link from Marketing
+- campaign, content, follow-up, and marketing AI counts
+- content status, channel, and product activity breakdowns
+- unscheduled and review-needed visibility
+- social connector readiness indicators
+- read-only analytics surface
+
 Useful commands:
 
 ```powershell
