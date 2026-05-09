@@ -209,7 +209,15 @@ values
   ('Product Support Agent', 'Customer Support', 'draft', 'Drafts product-specific support replies from approved knowledge.', 'v0.1'),
   ('Human Handoff Agent', 'Customer Support', 'draft', 'Creates tickets and routes sensitive conversations to humans.', 'v0.1'),
   ('Bug Intake Agent', 'Customer Support', 'draft', 'Converts complaints into structured bug reports.', 'v0.1'),
-  ('Documentation Agent', 'Documentation and Knowledge Base', 'draft', 'Drafts and maintains support docs, FAQs, and SOPs.', 'v0.1')
+  ('Documentation Agent', 'Documentation and Knowledge Base', 'draft', 'Drafts and maintains support docs, FAQs, and SOPs.', 'v0.1'),
+  ('Lead Qualification Agent', 'Sales and Growth', 'draft', 'Classifies leads by product interest, urgency, fit, and next step.', 'v0.1'),
+  ('Demo Prep Agent', 'Sales and Growth', 'draft', 'Prepares demo agendas, discovery questions, and product walkthrough notes.', 'v0.1'),
+  ('Product Manager Agent', 'Product Operations', 'draft', 'Turns support, analytics, and product signals into backlog suggestions.', 'v0.1'),
+  ('QA Checklist Agent', 'QA and Testing', 'draft', 'Generates focused manual test checklists and regression areas.', 'v0.1'),
+  ('Knowledge Curator Agent', 'Documentation and Knowledge Base', 'draft', 'Finds repeated questions and proposes FAQ or SOP knowledge entries.', 'v0.1'),
+  ('Management Report Agent', 'Finance, Billing, and Admin', 'draft', 'Prepares owner-reviewed operating summaries across products and support.', 'v0.1'),
+  ('Compliance Triage Agent', 'Compliance, Trust, and Audit', 'draft', 'Flags legal, financial, religious, contract, certification, and privacy risk.', 'v0.1'),
+  ('Repo Analyst Agent', 'Developer and Technical Operations', 'draft', 'Explains repository structure, dependencies, and implementation impact.', 'v0.1')
 on conflict (name) do update set
   department = excluded.department,
   status = excluded.status,
@@ -226,8 +234,15 @@ where a.name in (
   'Product Support Agent',
   'Human Handoff Agent',
   'Bug Intake Agent',
-  'Documentation Agent'
+  'Documentation Agent',
+  'Lead Qualification Agent',
+  'Demo Prep Agent',
+  'Product Manager Agent',
+  'QA Checklist Agent',
+  'Knowledge Curator Agent',
+  'Management Report Agent',
+  'Compliance Triage Agent',
+  'Repo Analyst Agent'
 )
 on conflict (agent_id, product_id) do update set
   access_level = excluded.access_level;
-

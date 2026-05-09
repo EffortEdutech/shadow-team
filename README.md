@@ -152,6 +152,23 @@ Included:
 - MyExpensio connector counts in Settings
 - audit event for delivery acknowledgements
 
+## Sprint 10 Status
+
+Sprint 10 adds department agent profiles and the first non-support operational agents.
+
+Included:
+
+- department agent profile registry
+- richer Agents page profile display
+- Sales and Growth agents
+- Product Operations agent
+- QA and Testing agent
+- Knowledge Curator agent
+- Management Report agent
+- Compliance Triage agent
+- Repo Analyst agent
+- draft-only product access for all six products
+
 Useful commands:
 
 ```powershell

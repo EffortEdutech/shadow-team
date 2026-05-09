@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { StateCard } from "@/components/ui/state-card";
+import { getDepartmentAgentProfile } from "@/lib/agent-profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Agent, AgentProductAccess, AgentRun, Product } from "@/lib/types";
 
@@ -16,6 +17,12 @@ type AgentRunRow = AgentRun & {
 function statusTone(status: string) {
   if (status === "active") return "success";
   if (status === "paused") return "warning";
+  return "neutral";
+}
+
+function stageTone(stage?: string) {
+  if (stage === "tool_limited") return "success";
+  if (stage === "ready_for_drafts") return "warning";
   return "neutral";
 }
 
@@ -47,7 +54,7 @@ export default async function AgentsPage() {
     <>
       <PageHeader
         title="Agents"
-        description="Read-only view of seeded draft agents, their departments, prompt versions, and product access."
+        description="Department agent profiles, operating boundaries, prompt versions, and product access."
       />
 
       {error ? (
@@ -64,16 +71,16 @@ export default async function AgentsPage() {
       ) : (
         <div className="grid gap-4">
           {(agents ?? []).map((agent) => (
-            <section
-              key={agent.id}
-              className="rounded-lg border border-border bg-panel p-5 shadow-sm"
-            >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div>
+            <section key={agent.id} className="rounded-lg border border-border bg-panel shadow-sm">
+              <div className="border-b border-border p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-base font-semibold">{agent.name}</h2>
                     <Badge tone={statusTone(agent.status)}>{agent.status}</Badge>
                     <Badge>{agent.system_prompt_version}</Badge>
+                    <Badge tone={stageTone(getDepartmentAgentProfile(agent.name)?.stage)}>
+                      {getDepartmentAgentProfile(agent.name)?.stage ?? "draft_profile"}
+                    </Badge>
                   </div>
                   <p className="mt-1 text-sm text-muted">{agent.department}</p>
                   {agent.description ? (
@@ -84,12 +91,87 @@ export default async function AgentsPage() {
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {agent.agent_product_access.map((access) => (
-                  <Badge key={access.id}>
-                    {access.products?.slug ?? "unknown"}: {access.access_level}
-                  </Badge>
-                ))}
+              <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted">
+                    Product Access
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {agent.agent_product_access.map((access) => (
+                      <Badge key={access.id}>
+                        {access.products?.slug ?? "unknown"}: {access.access_level}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {(() => {
+                  const profile = getDepartmentAgentProfile(agent.name);
+
+                  if (!profile) {
+                    return (
+                      <StateCard
+                        title="Profile pending"
+                        description="This agent does not have a locked department profile yet."
+                      />
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-xs font-medium uppercase text-muted">
+                          Mission
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-muted">
+                          {profile.mission}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase text-muted">
+                          First Outputs
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {profile.firstOutputs.map((item) => (
+                            <Badge key={item}>{item}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase text-muted">
+                          Human Approval
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-muted">
+                          {profile.humanApproval}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase text-muted">
+                          Allowed Actions
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {profile.allowedActions.map((item) => (
+                            <Badge key={item} tone="success">
+                              {item}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase text-muted">
+                          Restricted Actions
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {profile.restrictedActions.map((item) => (
+                            <Badge key={item} tone="danger">
+                              {item}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </section>
           ))}

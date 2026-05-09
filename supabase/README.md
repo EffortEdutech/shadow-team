@@ -19,6 +19,7 @@ https://supabase.com/dashboard/project/mzcdnvtmwyarcefbroja
 | `migrations/20260508160000_sprint_1_database_foundation.sql` | Creates tables, indexes, triggers, RLS policies, and helper functions |
 | `seed.sql` | Seeds products, product profiles, first draft agents, and agent product access |
 | `bootstrap_owner.sql` | Sets the first Supabase Auth user as Shadow Team owner |
+| `sprint_10_department_agents.sql` | Adds first non-support department agents and product access |
 
 ## Apply Option A - Supabase SQL Editor
 
