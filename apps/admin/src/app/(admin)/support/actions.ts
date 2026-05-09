@@ -472,6 +472,15 @@ export async function addConversationMessage(formData: FormData) {
     sender_id: userId,
     content,
     visibility,
+    metadata_json:
+      normalizedSenderType === "human"
+        ? {
+            connector_outbox: true,
+            delivery_status: "pending",
+          }
+        : {
+            internal_note: true,
+          },
   });
 
   if (messageError) {

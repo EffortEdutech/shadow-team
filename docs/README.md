@@ -25,6 +25,7 @@ This folder is the planning source of truth for Sprint 0.
 | `15_SPRINT_5_KNOWLEDGE_BASE_MVP.md` | Knowledge base MVP notes |
 | `16_SPRINT_6_ANALYTICS_DASHBOARD.md` | Analytics dashboard notes |
 | `17_SPRINT_7_MYEXPENSIO_CONNECTOR.md` | MyExpensio connector notes |
+| `18_SPRINT_8_HUMAN_REPLY_OUTBOX.md` | Human reply outbox and connector response path notes |
 
 ## Product Profiles
 

@@ -126,6 +126,19 @@ Included:
 - first user message creation
 - connector audit event
 
+## Sprint 8 Status
+
+Sprint 8 adds the human reply outbox for MyExpensio.
+
+Included:
+
+- authenticated connector response path
+- pull-based human reply outbox
+- cursor support with `since`
+- external human replies only
+- internal notes and AI drafts excluded
+- `outboxUrl` returned from inbound connector creation
+
 Useful commands:
 
 ```powershell

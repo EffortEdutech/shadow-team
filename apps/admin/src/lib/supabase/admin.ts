@@ -40,7 +40,17 @@ type ConnectorDatabase = {
         Relationships: [];
       };
       conversations: {
-        Row: { id: string };
+        Row: {
+          id: string;
+          product_id: string | null;
+          status: string;
+          priority: string;
+          ai_status: string;
+          subject: string | null;
+          last_message_at: string | null;
+          updated_at: string | null;
+          metadata_json: Json;
+        };
         Insert: {
           product_id?: string | null;
           channel?: string;
@@ -57,7 +67,17 @@ type ConnectorDatabase = {
         Relationships: [];
       };
       messages: {
-        Row: { id: string };
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_type: string;
+          sender_id: string | null;
+          content: string;
+          visibility: string;
+          channel_message_id: string | null;
+          metadata_json: Json;
+          created_at: string;
+        };
         Insert: {
           conversation_id: string;
           sender_type: string;

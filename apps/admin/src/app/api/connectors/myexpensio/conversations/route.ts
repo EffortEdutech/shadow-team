@@ -27,6 +27,29 @@ const ConnectorPayload = z.object({
     .optional(),
 });
 
+const OutboxQuery = z
+  .object({
+    conversationId: z.string().uuid().optional(),
+    externalConversationId: z.string().trim().min(1).optional(),
+    since: z
+      .preprocess(
+        (value) =>
+          typeof value === "string" && value.trim() === "" ? undefined : value,
+        z
+          .string()
+          .trim()
+          .refine((value) => !Number.isNaN(Date.parse(value)), {
+            message:
+              "since must be an ISO timestamp. URL-encode cursor values before sending them.",
+          })
+          .optional(),
+      )
+      .optional(),
+  })
+  .refine((query) => query.conversationId || query.externalConversationId, {
+    message: "conversationId or externalConversationId is required.",
+  });
+
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
@@ -203,16 +226,180 @@ export async function POST(request: NextRequest) {
     {
       conversationId: conversation.id,
       contactProfileId: contactResult.data.id,
+      outboxUrl: `/api/connectors/myexpensio/conversations?conversationId=${conversation.id}`,
       status: "created",
     },
     { status: 201 },
   );
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const hasOutboxQuery =
+    searchParams.has("conversationId") ||
+    searchParams.has("externalConversationId");
+
+  if (!hasOutboxQuery) {
+    return NextResponse.json({
+      connector: "myexpensio",
+      status: "ready",
+      outbox:
+        "Use ?conversationId=<uuid> or ?externalConversationId=<id> with connector authentication to pull human replies.",
+    });
+  }
+
+  if (!verifyConnectorSecret(request)) {
+    return unauthorized();
+  }
+
+  const queryResult = OutboxQuery.safeParse({
+    conversationId: searchParams.get("conversationId") ?? undefined,
+    externalConversationId:
+      searchParams.get("externalConversationId") ?? undefined,
+    since: searchParams.get("since") ?? undefined,
+  });
+
+  if (!queryResult.success) {
+    return NextResponse.json(
+      {
+        error: "Invalid outbox query.",
+        details: queryResult.error.message,
+      },
+      { status: 400 },
+    );
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Supabase service role is not configured." },
+      { status: 500 },
+    );
+  }
+
+  const { data: product, error: productError } = await supabase
+    .from("products")
+    .select("id")
+    .eq("slug", "myexpensio")
+    .single<{ id: string }>();
+
+  if (productError || !product) {
+    return NextResponse.json(
+      { error: productError?.message ?? "MyExpensio product not found." },
+      { status: 500 },
+    );
+  }
+
+  let conversationQuery = supabase
+    .from("conversations")
+    .select(
+      "id, product_id, status, priority, ai_status, subject, last_message_at, updated_at, metadata_json",
+    )
+    .eq("product_id", product.id)
+    .eq("metadata_json->>connector", "myexpensio")
+    .limit(1);
+
+  if (queryResult.data.conversationId) {
+    conversationQuery = conversationQuery.eq(
+      "id",
+      queryResult.data.conversationId,
+    );
+  } else if (queryResult.data.externalConversationId) {
+    conversationQuery = conversationQuery.eq(
+      "metadata_json->>external_conversation_id",
+      queryResult.data.externalConversationId,
+    );
+  }
+
+  const { data: conversations, error: conversationError } =
+    await conversationQuery.returns<
+      Array<{
+        id: string;
+        status: string;
+        priority: string;
+        ai_status: string;
+        subject: string | null;
+        last_message_at: string | null;
+        updated_at: string | null;
+        metadata_json: Record<string, unknown> | null;
+      }>
+    >();
+
+  if (conversationError) {
+    return NextResponse.json(
+      { error: conversationError.message },
+      { status: 500 },
+    );
+  }
+
+  const conversation = conversations?.[0];
+
+  if (!conversation) {
+    return NextResponse.json(
+      { error: "Conversation not found." },
+      { status: 404 },
+    );
+  }
+
+  let messagesQuery = supabase
+    .from("messages")
+    .select("id, content, created_at, channel_message_id")
+    .eq("conversation_id", conversation.id)
+    .eq("sender_type", "human")
+    .eq("visibility", "external")
+    .order("created_at", { ascending: true });
+
+  if (queryResult.data.since) {
+    messagesQuery = messagesQuery.gt("created_at", queryResult.data.since);
+  }
+
+  const { data: messages, error: messagesError } =
+    await messagesQuery.returns<
+      Array<{
+        id: string;
+        content: string;
+        created_at: string;
+        channel_message_id: string | null;
+      }>
+    >();
+
+  if (messagesError) {
+    return NextResponse.json({ error: messagesError.message }, { status: 500 });
+  }
+
+  const externalConversationId =
+    typeof conversation.metadata_json?.external_conversation_id === "string"
+      ? conversation.metadata_json.external_conversation_id
+      : queryResult.data.externalConversationId ?? null;
+
+  const safeMessages = (messages ?? []).map((message) => ({
+    id: message.id,
+    type: "human_reply",
+    content: message.content,
+    createdAt: message.created_at,
+    cursor: message.created_at,
+    channelMessageId: message.channel_message_id,
+  }));
+
+  return NextResponse.json({
+    connector: "myexpensio",
+    conversationId: conversation.id,
+    externalConversationId,
+    status: conversation.status,
+    priority: conversation.priority,
+    aiStatus: conversation.ai_status,
+    subject: conversation.subject,
+    updatedAt: conversation.updated_at,
+    lastMessageAt: conversation.last_message_at,
+    messages: safeMessages,
+    nextCursor: safeMessages.at(-1)?.cursor ?? queryResult.data.since ?? null,
+  });
+}
+
+export async function HEAD() {
   return NextResponse.json({
     connector: "myexpensio",
     status: "ready",
   });
 }
-
