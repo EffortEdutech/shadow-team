@@ -101,6 +101,16 @@ export const departmentAgentProfiles: DepartmentAgentProfile[] = [
     restrictedActions: ["approve release readiness alone"],
   },
   {
+    name: "Release Readiness Agent",
+    department: "QA and Testing",
+    stage: "draft_profile",
+    mission: "Draft release readiness reports from QA, approvals, support risk, knowledge, backlog, and recent agent activity.",
+    firstOutputs: ["release readiness report", "blocker list", "go/no-go questions"],
+    humanApproval: "Human release owner makes final release decision.",
+    allowedActions: ["summarize release evidence", "flag blockers", "recommend required actions"],
+    restrictedActions: ["approve releases", "deploy software", "make final go/no-go decisions"],
+  },
+  {
     name: "Knowledge Curator Agent",
     department: "Documentation and Knowledge Base",
     stage: "draft_profile",

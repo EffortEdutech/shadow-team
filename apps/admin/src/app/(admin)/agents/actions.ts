@@ -102,6 +102,32 @@ const ManagementReportDraft = z.object({
   humanApprovalRequired: z.boolean(),
 });
 
+const ReleaseReadinessDraft = z.object({
+  title: z.string().min(1).max(180),
+  releaseSummary: z.string().min(1),
+  readinessDecision: z.enum(["ready_for_human_review", "not_ready", "blocked"]),
+  evidenceReviewed: z.array(z.string()).min(1),
+  qaStatus: z.array(z.string()).min(1),
+  approvalStatus: z.array(z.string()).min(1),
+  supportRisk: z.array(z.string()).min(1),
+  knowledgeReadiness: z.array(z.string()).min(1),
+  blockers: z.array(z.string()).min(1),
+  requiredActions: z
+    .array(
+      z.object({
+        action: z.string().min(1),
+        owner: z.string().min(1),
+        priority: z.enum(["low", "medium", "high"]),
+        reason: z.string().min(1),
+      }),
+    )
+    .min(1),
+  goNoGoQuestions: z.array(z.string()).min(1),
+  confidence: z.number().min(0).max(1),
+  riskLevel: z.enum(["low", "medium", "high", "critical"]),
+  humanApprovalRequired: z.boolean(),
+});
+
 function formatChecklist(parsed: z.infer<typeof QaChecklistDraft>) {
   const checklist = parsed.testChecklist
     .map(
@@ -199,6 +225,42 @@ function formatManagementReport(parsed: z.infer<typeof ManagementReportDraft>) {
     ...parsed.openQuestions.map((item) => `- ${item}`),
     "",
     "Status: draft only. Human owner/admin review required before sharing outside the owner/admin team.",
+  ].join("\n");
+}
+
+function formatReleaseReadiness(parsed: z.infer<typeof ReleaseReadinessDraft>) {
+  return [
+    `Release summary: ${parsed.releaseSummary}`,
+    `Readiness decision: ${parsed.readinessDecision}`,
+    "",
+    "Evidence reviewed:",
+    ...parsed.evidenceReviewed.map((item) => `- ${item}`),
+    "",
+    "QA status:",
+    ...parsed.qaStatus.map((item) => `- ${item}`),
+    "",
+    "Approval status:",
+    ...parsed.approvalStatus.map((item) => `- ${item}`),
+    "",
+    "Support risk:",
+    ...parsed.supportRisk.map((item) => `- ${item}`),
+    "",
+    "Knowledge readiness:",
+    ...parsed.knowledgeReadiness.map((item) => `- ${item}`),
+    "",
+    "Blockers:",
+    ...parsed.blockers.map((item) => `- ${item}`),
+    "",
+    "Required actions:",
+    ...parsed.requiredActions.map(
+      (item) =>
+        `- [${item.priority}] ${item.action} (Owner: ${item.owner}) - ${item.reason}`,
+    ),
+    "",
+    "Go/no-go questions:",
+    ...parsed.goNoGoQuestions.map((item) => `- ${item}`),
+    "",
+    "Status: draft only. Human release owner approval is required before any release decision.",
   ].join("\n");
 }
 
@@ -1085,4 +1147,299 @@ export async function generateManagementReportDraft(formData: FormData) {
   revalidatePath("/agents");
   revalidatePath("/analytics");
   revalidatePath("/knowledge");
+}
+
+export async function generateReleaseReadinessDraft(formData: FormData) {
+  const { supabase, userId } = await getSignedInUserId();
+  const openai = getOpenAIClient();
+
+  const productId = readString(formData, "productId");
+  const releaseScope = readString(formData, "releaseScope");
+  const notes = readString(formData, "notes");
+
+  if (!productId || !releaseScope) {
+    throw new Error("Product and release scope are required.");
+  }
+
+  if (!openai) {
+    throw new Error("OPENAI_API_KEY is not configured.");
+  }
+
+  const [
+    productResult,
+    conversationsResult,
+    ticketsResult,
+    knowledgeResult,
+    agentRunsResult,
+    agentResult,
+  ] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, slug, risk_level, first_ai_use_case")
+      .eq("id", productId)
+      .single<{
+        id: string;
+        name: string;
+        slug: string;
+        risk_level: string;
+        first_ai_use_case: string | null;
+      }>(),
+    supabase
+      .from("conversations")
+      .select("status, priority, ai_status, subject, last_message_preview, created_at")
+      .eq("product_id", productId)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .returns<
+        Array<{
+          status: string;
+          priority: string;
+          ai_status: string;
+          subject: string | null;
+          last_message_preview: string | null;
+          created_at: string;
+        }>
+      >(),
+    supabase
+      .from("tickets")
+      .select("category, status, priority, summary, created_at")
+      .eq("product_id", productId)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .returns<
+        Array<{
+          category: string;
+          status: string;
+          priority: string;
+          summary: string;
+          created_at: string;
+        }>
+      >(),
+    supabase
+      .from("knowledge_sources")
+      .select("source_type, source_title, status, metadata_json, created_at")
+      .eq("product_id", productId)
+      .order("created_at", { ascending: false })
+      .limit(40)
+      .returns<
+        Array<{
+          source_type: string;
+          source_title: string;
+          status: string;
+          metadata_json: Record<string, unknown>;
+          created_at: string;
+        }>
+      >(),
+    supabase
+      .from("agent_runs")
+      .select("confidence, risk_level, human_required, status, output_json, created_at, agents(name)")
+      .eq("product_id", productId)
+      .order("created_at", { ascending: false })
+      .limit(25)
+      .returns<
+        Array<{
+          confidence: number | null;
+          risk_level: string;
+          human_required: boolean;
+          status: string;
+          output_json: Record<string, unknown>;
+          created_at: string;
+          agents: { name: string } | null;
+        }>
+      >(),
+    supabase
+      .from("agents")
+      .select("id")
+      .eq("name", "Release Readiness Agent")
+      .maybeSingle<{ id: string }>(),
+  ]);
+
+  for (const result of [
+    productResult,
+    conversationsResult,
+    ticketsResult,
+    knowledgeResult,
+    agentRunsResult,
+  ]) {
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+  }
+
+  if (!productResult.data) {
+    throw new Error("Product not found.");
+  }
+
+  const knowledge = knowledgeResult.data ?? [];
+  const readinessContext = {
+    approvedQaChecklists: knowledge.filter(
+      (source) => source.source_type === "qa_checklist" && source.status === "approved",
+    ),
+    draftQaChecklists: knowledge.filter(
+      (source) => source.source_type === "qa_checklist" && source.status === "draft",
+    ),
+    approvedKnowledge: knowledge.filter((source) => source.status === "approved"),
+    pendingApprovals: knowledge.filter((source) => source.status === "draft"),
+    rejectedOrArchived: knowledge.filter((source) => source.status === "archived"),
+    backlogSuggestions: knowledge.filter(
+      (source) => source.source_type === "backlog_suggestion",
+    ),
+  };
+  const model = getOpenAIModel();
+
+  const response = await openai.responses.parse({
+    model,
+    input: [
+      {
+        role: "system",
+        content:
+          "You are Shadow Team's Release Readiness Agent. Draft release readiness reports from QA, approvals, support risk, knowledge, backlog, and AI activity. Do not approve releases, deploy software, make go/no-go decisions, or override human owners. If evidence is missing, mark blocked or not ready.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify(
+          {
+            product: productResult.data,
+            releaseScope,
+            notes,
+            conversations: conversationsResult.data ?? [],
+            tickets: ticketsResult.data ?? [],
+            knowledgeSources: knowledge,
+            readinessContext,
+            agentRuns: agentRunsResult.data ?? [],
+            outputRules: {
+              readinessDecision:
+                "Use ready_for_human_review only when evidence is strong and no major blockers are visible.",
+              blockers:
+                "List blockers clearly. If none, say what was checked and why no blocker is visible.",
+              humanApprovalRequired: "Always true.",
+            },
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+    text: {
+      format: zodTextFormat(ReleaseReadinessDraft, "release_readiness_draft"),
+    },
+  });
+
+  const parsed = response.output_parsed;
+
+  if (!parsed) {
+    throw new Error("Release Readiness Agent did not return a parsed report.");
+  }
+
+  const { data: agentRun, error: agentRunError } = await supabase
+    .from("agent_runs")
+    .insert({
+      agent_id: agentResult.data?.id ?? null,
+      product_id: productId,
+      input_json: {
+        model,
+        product_slug: productResult.data.slug,
+        release_scope: releaseScope,
+        notes,
+        conversation_count: conversationsResult.data?.length ?? 0,
+        ticket_count: ticketsResult.data?.length ?? 0,
+        knowledge_count: knowledge.length,
+        agent_run_count: agentRunsResult.data?.length ?? 0,
+      },
+      output_json: parsed,
+      confidence: parsed.confidence,
+      risk_level: parsed.riskLevel,
+      human_required: true,
+      status: "completed",
+    })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (agentRunError) {
+    throw new Error(agentRunError.message);
+  }
+
+  const { data: source, error: sourceError } = await supabase
+    .from("knowledge_sources")
+    .insert({
+      product_id: productId,
+      source_type: "release_readiness",
+      source_title: parsed.title,
+      source_path: null,
+      status: "draft",
+      version: "v0.1",
+      metadata_json: {
+        created_from: "release_readiness_agent",
+        agent_run_id: agentRun.id,
+        release_scope: releaseScope,
+        readiness_decision: parsed.readinessDecision,
+        human_approval_required: parsed.humanApprovalRequired,
+      },
+    })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (sourceError) {
+    throw new Error(sourceError.message);
+  }
+
+  const { error: chunkError } = await supabase.from("knowledge_chunks").insert({
+    source_id: source.id,
+    chunk_text: formatReleaseReadiness(parsed),
+    metadata_json: {
+      chunk_type: "release_readiness_agent_draft",
+      agent_run_id: agentRun.id,
+    },
+  });
+
+  if (chunkError) {
+    throw new Error(chunkError.message);
+  }
+
+  await supabase.from("agent_tool_calls").insert({
+    agent_run_id: agentRun.id,
+    tool_name: "create_draft_release_readiness_report",
+    input_json: {
+      product_id: productId,
+      release_scope: releaseScope,
+    },
+    output_json: {
+      knowledge_source_id: source.id,
+      title: parsed.title,
+      readiness_decision: parsed.readinessDecision,
+      status: "draft",
+    },
+    status: "completed",
+  });
+
+  await supabase.from("audit_events").insert({
+    product_id: productId,
+    actor_type: "ai",
+    event_type: "release_readiness_draft_created",
+    entity_type: "knowledge_source",
+    entity_id: source.id,
+    metadata_json: {
+      agent_run_id: agentRun.id,
+      risk_level: parsed.riskLevel,
+      confidence: parsed.confidence,
+      readiness_decision: parsed.readinessDecision,
+    },
+  });
+
+  await supabase.from("audit_events").insert({
+    product_id: productId,
+    actor_type: "human",
+    actor_id: userId,
+    event_type: "release_readiness_requested",
+    entity_type: "knowledge_source",
+    entity_id: source.id,
+    metadata_json: {
+      agent_run_id: agentRun.id,
+      release_scope: releaseScope,
+    },
+  });
+
+  revalidatePath("/agents");
+  revalidatePath("/knowledge");
+  revalidatePath("/approvals");
 }

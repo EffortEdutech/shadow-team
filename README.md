@@ -244,6 +244,21 @@ Included:
 - audit events for approval decisions
 - central human control before AI outputs become official assets
 
+## Sprint 16 Status
+
+Sprint 16 adds the Release Readiness Gate.
+
+Included:
+
+- Release Readiness Agent profile and seed entry
+- Release Readiness Agent form on the Agents page
+- product and release scope input
+- QA, approval, support, knowledge, backlog, and agent-run context
+- AI-generated draft release readiness reports
+- draft `release_readiness` knowledge sources
+- release readiness drafts in Approvals Inbox
+- human release-owner approval before any release decision
+
 Useful commands:
 
 ```powershell

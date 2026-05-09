@@ -14,6 +14,7 @@ import {
   generateManagementReportDraft,
   generateProductManagerDraft,
   generateQaChecklistDraft,
+  generateReleaseReadinessDraft,
 } from "./actions";
 
 type AgentWithAccess = Agent & {
@@ -40,6 +41,13 @@ type BacklogSuggestionRow = Pick<
 };
 
 type ManagementReportRow = Pick<
+  KnowledgeSource,
+  "id" | "source_title" | "status" | "created_at" | "metadata_json"
+> & {
+  products: Pick<Product, "slug"> | null;
+};
+
+type ReleaseReadinessRow = Pick<
   KnowledgeSource,
   "id" | "source_title" | "status" | "created_at" | "metadata_json"
 > & {
@@ -84,6 +92,7 @@ export default async function AgentsPage() {
 
   const [
     { data: products },
+    { data: releaseReadinessReports },
     { data: managementReports },
     { data: qaChecklists },
     { data: backlogSuggestions },
@@ -93,6 +102,13 @@ export default async function AgentsPage() {
       .select("id, name, slug, status, priority, risk_level, first_ai_use_case")
       .order("priority", { ascending: true })
       .returns<Product[]>(),
+    supabase
+      .from("knowledge_sources")
+      .select("id, source_title, status, created_at, metadata_json, products(slug)")
+      .eq("source_type", "release_readiness")
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .returns<ReleaseReadinessRow[]>(),
     supabase
       .from("knowledge_sources")
       .select("id, source_title, status, created_at, metadata_json, products(slug)")
@@ -122,6 +138,110 @@ export default async function AgentsPage() {
         title="Agents"
         description="Department agent profiles, operating boundaries, prompt versions, and product access."
       />
+
+      <section className="mb-6 rounded-lg border border-border bg-panel p-5 shadow-sm">
+        <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold">Release Readiness Agent</h2>
+              <Badge>draft workflow</Badge>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Draft a release gate report from QA, approvals, support risk,
+              knowledge, backlog, and recent agent activity. Human release
+              owner approval is required.
+            </p>
+          </div>
+
+          <form action={generateReleaseReadinessDraft} className="grid gap-3 lg:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Product
+              </span>
+              <select
+                name="productId"
+                required
+                className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+              >
+                <option value="">Select product</option>
+                {(products ?? []).map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Release scope
+              </span>
+              <input
+                name="releaseScope"
+                required
+                className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+                placeholder="MyExpensio connector MVP release"
+              />
+            </label>
+
+            <label className="block lg:col-span-2">
+              <span className="mb-1 block text-xs font-medium text-muted">
+                Notes
+              </span>
+              <textarea
+                name="notes"
+                rows={4}
+                className="w-full resize-none rounded-md border border-border bg-white px-3 py-2 text-sm"
+                placeholder="Mention release constraints, known risks, required approvals, or blockers to check..."
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong lg:col-span-2"
+            >
+              Generate release readiness report
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section className="mb-6 overflow-hidden rounded-lg border border-border bg-panel shadow-sm">
+        <div className="border-b border-border bg-panel-strong px-5 py-4">
+          <h2 className="text-base font-semibold">Recent Release Readiness</h2>
+          <p className="mt-1 text-sm text-muted">
+            Draft release gate reports created by the Release Readiness Agent.
+          </p>
+        </div>
+        {(releaseReadinessReports ?? []).length === 0 ? (
+          <div className="p-5">
+            <StateCard
+              title="No release readiness reports yet"
+              description="Generate the first release gate report from the Release Readiness Agent panel."
+            />
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {(releaseReadinessReports ?? []).map((report) => (
+              <div
+                key={report.id}
+                className="grid gap-3 px-5 py-4 text-sm md:grid-cols-[1fr_auto]"
+              >
+                <div>
+                  <p className="font-medium">{report.source_title}</p>
+                  <p className="mt-1 text-muted">
+                    {report.products?.slug ?? "unknown"} -{" "}
+                    {typeof report.metadata_json.release_scope === "string"
+                      ? report.metadata_json.release_scope
+                      : "release scope"}
+                  </p>
+                </div>
+                <Badge>{report.status}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="mb-6 rounded-lg border border-border bg-panel p-5 shadow-sm">
         <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">

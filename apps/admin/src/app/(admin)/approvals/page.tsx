@@ -10,6 +10,7 @@ const aiCreatedFrom = new Set([
   "qa_checklist_agent",
   "product_manager_agent",
   "management_report_agent",
+  "release_readiness_agent",
 ]);
 
 type ApprovalRow = KnowledgeSource & {
