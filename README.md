@@ -294,6 +294,21 @@ Included:
 - open tickets panel
 - read-only links into source workflows
 
+## Sprint 19 Status
+
+Sprint 19 adds Operator Ownership / Reviewed Today workflow.
+
+Included:
+
+- `work_item_reviews` SQL table
+- Work Queue reviewed-today count
+- per-item operator note
+- per-item `Mark reviewed today` action
+- owned-by-you and reviewed-by-you badges
+- audit event for daily work item review
+- Daily Brief reviewed-today metric
+- no business decision changes from review tracking
+
 Useful commands:
 
 ```powershell

@@ -114,6 +114,23 @@ entity_type
 entity_id
 metadata_json
 created_at
+
+work_item_reviews
+-----------------
+id
+item_type
+item_id
+product_id
+item_label
+source_path
+owner_user_id
+reviewed_by
+reviewed_at
+review_date
+note
+metadata_json
+created_at
+updated_at
 ```
 
 ## Agent Tables
@@ -250,4 +267,3 @@ conversion_events
 risk_flags
 created_at
 ```
-

@@ -12,6 +12,7 @@ import type {
   Message,
   Product,
   Ticket,
+  WorkItemReview,
 } from "@/lib/types";
 
 type ConversationBrief = Pick<
@@ -167,6 +168,7 @@ export default async function DashboardPage() {
   }
 
   const now = new Date();
+  const today = now.toISOString().slice(0, 10);
   const since24Hours = new Date(now);
   since24Hours.setHours(since24Hours.getHours() - 24);
   const staleBefore = new Date(now);
@@ -182,6 +184,7 @@ export default async function DashboardPage() {
     ticketsResult,
     todayRunsResult,
     productCountResult,
+    reviewedTodayResult,
   ] = await Promise.all([
     supabase
       .from("conversations")
@@ -255,6 +258,11 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .gte("created_at", since24Hours.toISOString()),
     supabase.from("products").select("*", { count: "exact", head: true }),
+    supabase
+      .from("work_item_reviews")
+      .select("*", { count: "exact", head: true })
+      .eq("review_date", today)
+      .returns<WorkItemReview[]>(),
   ]);
 
   const loadError =
@@ -266,7 +274,8 @@ export default async function DashboardPage() {
     agentRunsResult.error ??
     ticketsResult.error ??
     todayRunsResult.error ??
-    productCountResult.error;
+    productCountResult.error ??
+    reviewedTodayResult.error;
 
   const approvals = (approvalsResult.data ?? []).filter((item) =>
     aiCreatedFrom.has(String(item.metadata_json.created_from ?? "")),
@@ -340,7 +349,7 @@ export default async function DashboardPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <BriefMetric
           label="Needs attention"
           value={totalAttentionCount}
@@ -364,6 +373,12 @@ export default async function DashboardPage() {
           value={todayRunsResult.count ?? 0}
           href="/agents"
         />
+        <BriefMetric
+          label="Reviewed today"
+          value={reviewedTodayResult.count ?? 0}
+          href="/work-queue"
+          tone={(reviewedTodayResult.count ?? 0) > 0 ? "success" : "neutral"}
+        />
       </div>
 
       <section className="mt-6 rounded-lg border border-border bg-panel p-5 shadow-sm">
@@ -372,7 +387,8 @@ export default async function DashboardPage() {
             <h2 className="text-base font-semibold">Morning Readout</h2>
             <p className="mt-1 text-sm text-muted">
               {productCountResult.count ?? 0} products monitored. Brief generated{" "}
-              {formatDate(now.toISOString())}.
+              {formatDate(now.toISOString())}.{" "}
+              {reviewedTodayResult.count ?? 0} work items reviewed today.
             </p>
           </div>
           <Badge tone={totalAttentionCount > 0 ? "warning" : "success"}>

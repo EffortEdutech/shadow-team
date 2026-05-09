@@ -115,3 +115,26 @@ export type KnowledgeChunk = {
   metadata_json: Record<string, unknown>;
   created_at: string;
 };
+
+export type WorkItemReview = {
+  id: string;
+  item_type:
+    | "conversation"
+    | "approval"
+    | "release_readiness"
+    | "delivery"
+    | "agent_run"
+    | "ticket";
+  item_id: string;
+  product_id: string | null;
+  item_label: string;
+  source_path: string;
+  owner_user_id: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_date: string;
+  note: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};

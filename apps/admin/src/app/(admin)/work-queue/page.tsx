@@ -11,32 +11,58 @@ import type {
   Message,
   Product,
   Ticket,
+  WorkItemReview,
 } from "@/lib/types";
+import { markWorkItemReviewed } from "./actions";
 
 type ConversationWorkItem = Pick<
   Conversation,
-  "id" | "subject" | "status" | "priority" | "last_message_at" | "created_at"
+  | "id"
+  | "product_id"
+  | "subject"
+  | "status"
+  | "priority"
+  | "last_message_at"
+  | "created_at"
 > & {
   products: Pick<Product, "name" | "slug"> | null;
 };
 
 type TicketWorkItem = Pick<
   Ticket,
-  "id" | "category" | "status" | "priority" | "summary" | "created_at"
+  | "id"
+  | "product_id"
+  | "category"
+  | "status"
+  | "priority"
+  | "summary"
+  | "created_at"
 > & {
   products: Pick<Product, "name" | "slug"> | null;
 };
 
 type ApprovalWorkItem = Pick<
   KnowledgeSource,
-  "id" | "source_title" | "source_type" | "status" | "metadata_json" | "updated_at"
+  | "id"
+  | "product_id"
+  | "source_title"
+  | "source_type"
+  | "status"
+  | "metadata_json"
+  | "updated_at"
 > & {
   products: Pick<Product, "name" | "slug"> | null;
 };
 
 type AgentRunWorkItem = Pick<
   AgentRun,
-  "id" | "risk_level" | "confidence" | "human_required" | "status" | "created_at"
+  | "id"
+  | "product_id"
+  | "risk_level"
+  | "confidence"
+  | "human_required"
+  | "status"
+  | "created_at"
 > & {
   agents: Pick<Agent, "name"> | null;
   products: Pick<Product, "name" | "slug"> | null;
@@ -46,7 +72,10 @@ type DeliveryWorkItem = Pick<
   Message,
   "id" | "conversation_id" | "content" | "metadata_json" | "created_at"
 > & {
-  conversations: Pick<Conversation, "subject" | "priority" | "status"> | null;
+  conversations: Pick<
+    Conversation,
+    "product_id" | "subject" | "priority" | "status"
+  > | null;
 };
 
 const aiCreatedFrom = new Set([
@@ -92,6 +121,78 @@ function sourceTypeLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function reviewKey(itemType: string, itemId: string) {
+  return `${itemType}:${itemId}`;
+}
+
+function ReviewControl({
+  itemType,
+  itemId,
+  productId,
+  itemLabel,
+  sourcePath,
+  review,
+  currentUserId,
+}: {
+  itemType: WorkItemReview["item_type"];
+  itemId: string;
+  productId: string | null;
+  itemLabel: string;
+  sourcePath: string;
+  review?: WorkItemReview;
+  currentUserId?: string | null;
+}) {
+  const reviewedByYou = review?.reviewed_by === currentUserId;
+
+  return (
+    <form
+      action={markWorkItemReviewed}
+      className="mt-4 rounded-md border border-border bg-panel-strong p-3"
+    >
+      <input type="hidden" name="itemType" value={itemType} />
+      <input type="hidden" name="itemId" value={itemId} />
+      <input type="hidden" name="productId" value={productId ?? ""} />
+      <input type="hidden" name="itemLabel" value={itemLabel} />
+      <input type="hidden" name="sourcePath" value={sourcePath} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {review?.reviewed_at ? (
+            <Badge tone="success">
+              {reviewedByYou ? "reviewed by you today" : "reviewed today"}
+            </Badge>
+          ) : (
+            <Badge tone="warning">not reviewed today</Badge>
+          )}
+          {review?.owner_user_id ? (
+            <Badge>
+              {review.owner_user_id === currentUserId ? "owned by you" : "owned"}
+            </Badge>
+          ) : (
+            <Badge>unowned</Badge>
+          )}
+        </div>
+        <button
+          type="submit"
+          className="inline-flex h-9 items-center justify-center rounded-md bg-accent px-3 text-sm font-semibold text-white hover:bg-accent-strong"
+        >
+          {review?.reviewed_at ? "Update review note" : "Mark reviewed today"}
+        </button>
+      </div>
+      <label className="mt-3 block">
+        <span className="mb-1 block text-xs font-medium text-muted">
+          Operator note
+        </span>
+        <input
+          name="note"
+          defaultValue={review?.note ?? ""}
+          className="h-9 w-full rounded-md border border-border bg-white px-3 text-sm"
+          placeholder="Optional handoff note for today's review"
+        />
+      </label>
+    </form>
+  );
+}
+
 function QueueSection({
   title,
   count,
@@ -128,6 +229,11 @@ export default async function WorkQueuePage() {
     return null;
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const [
     conversationsResult,
     approvalsResult,
@@ -135,11 +241,12 @@ export default async function WorkQueuePage() {
     deliveryResult,
     agentRunsResult,
     ticketsResult,
+    reviewsResult,
   ] = await Promise.all([
     supabase
       .from("conversations")
       .select(
-        "id, subject, status, priority, last_message_at, created_at, products(name, slug)",
+        "id, product_id, subject, status, priority, last_message_at, created_at, products(name, slug)",
       )
       .in("status", ["open", "escalated"])
       .in("priority", ["high", "urgent"])
@@ -149,7 +256,7 @@ export default async function WorkQueuePage() {
     supabase
       .from("knowledge_sources")
       .select(
-        "id, source_title, source_type, status, metadata_json, updated_at, products(name, slug)",
+        "id, product_id, source_title, source_type, status, metadata_json, updated_at, products(name, slug)",
       )
       .eq("status", "draft")
       .order("updated_at", { ascending: false })
@@ -158,7 +265,7 @@ export default async function WorkQueuePage() {
     supabase
       .from("knowledge_sources")
       .select(
-        "id, source_title, source_type, status, metadata_json, updated_at, products(name, slug)",
+        "id, product_id, source_title, source_type, status, metadata_json, updated_at, products(name, slug)",
       )
       .eq("source_type", "release_readiness")
       .eq("status", "draft")
@@ -168,7 +275,7 @@ export default async function WorkQueuePage() {
     supabase
       .from("messages")
       .select(
-        "id, conversation_id, content, metadata_json, created_at, conversations(subject, priority, status)",
+        "id, conversation_id, content, metadata_json, created_at, conversations(product_id, subject, priority, status)",
       )
       .eq("sender_type", "human")
       .eq("visibility", "external")
@@ -179,7 +286,7 @@ export default async function WorkQueuePage() {
     supabase
       .from("agent_runs")
       .select(
-        "id, risk_level, confidence, human_required, status, created_at, agents(name), products(name, slug)",
+        "id, product_id, risk_level, confidence, human_required, status, created_at, agents(name), products(name, slug)",
       )
       .eq("human_required", true)
       .in("risk_level", ["high", "critical"])
@@ -188,11 +295,19 @@ export default async function WorkQueuePage() {
       .returns<AgentRunWorkItem[]>(),
     supabase
       .from("tickets")
-      .select("id, category, status, priority, summary, created_at, products(name, slug)")
+      .select(
+        "id, product_id, category, status, priority, summary, created_at, products(name, slug)",
+      )
       .in("status", ["open", "pending", "escalated"])
       .order("created_at", { ascending: false })
       .limit(20)
       .returns<TicketWorkItem[]>(),
+    supabase
+      .from("work_item_reviews")
+      .select("*")
+      .eq("review_date", today)
+      .limit(500)
+      .returns<WorkItemReview[]>(),
   ]);
 
   const loadError =
@@ -201,12 +316,19 @@ export default async function WorkQueuePage() {
     releaseReadinessResult.error ??
     deliveryResult.error ??
     agentRunsResult.error ??
-    ticketsResult.error;
+    ticketsResult.error ??
+    reviewsResult.error;
 
   const approvals = (approvalsResult.data ?? []).filter((item) =>
     aiCreatedFrom.has(String(item.metadata_json.created_from ?? "")),
   );
   const releaseReadiness = releaseReadinessResult.data ?? [];
+  const reviewsByItem = new Map(
+    (reviewsResult.data ?? []).map((review) => [
+      reviewKey(review.item_type, review.item_id),
+      review,
+    ]),
+  );
   const totalCount =
     (conversationsResult.data?.length ?? 0) +
     approvals.length +
@@ -214,6 +336,7 @@ export default async function WorkQueuePage() {
     (deliveryResult.data?.length ?? 0) +
     (agentRunsResult.data?.length ?? 0) +
     (ticketsResult.data?.length ?? 0);
+  const reviewedTodayCount = reviewsByItem.size;
 
   return (
     <>
@@ -231,8 +354,18 @@ export default async function WorkQueuePage() {
       ) : null}
 
       <section className="mb-6 rounded-lg border border-border bg-panel p-5 shadow-sm">
-        <p className="text-sm text-muted">Open human work items</p>
-        <p className="mt-2 font-mono text-4xl font-semibold">{totalCount}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <p className="text-sm text-muted">Open human work items</p>
+            <p className="mt-2 font-mono text-4xl font-semibold">{totalCount}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted">Reviewed today</p>
+            <p className="mt-2 font-mono text-4xl font-semibold">
+              {reviewedTodayCount}
+            </p>
+          </div>
+        </div>
       </section>
 
       <div className="grid gap-4 xl:grid-cols-2">
@@ -241,63 +374,84 @@ export default async function WorkQueuePage() {
           count={conversationsResult.data?.length ?? 0}
         >
           {(conversationsResult.data ?? []).map((item) => (
-            <Link
-              key={item.id}
-              href={`/support?conversation=${item.id}`}
-              className="block px-5 py-4 hover:bg-panel-strong"
-            >
-              <div className="flex flex-wrap gap-2">
-                <Badge tone={statusTone(item.status)}>{item.status}</Badge>
-                <Badge tone={priorityTone(item.priority)}>{item.priority}</Badge>
-                <Badge>{item.products?.slug ?? "unknown"}</Badge>
-              </div>
-              <p className="mt-3 text-sm font-medium">
-                {item.subject ?? "Untitled conversation"}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                {formatDate(item.last_message_at ?? item.created_at)}
-              </p>
-            </Link>
+            <div key={item.id} className="px-5 py-4">
+              <Link href={`/support?conversation=${item.id}`} className="block">
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone={statusTone(item.status)}>{item.status}</Badge>
+                  <Badge tone={priorityTone(item.priority)}>{item.priority}</Badge>
+                  <Badge>{item.products?.slug ?? "unknown"}</Badge>
+                </div>
+                <p className="mt-3 text-sm font-medium">
+                  {item.subject ?? "Untitled conversation"}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {formatDate(item.last_message_at ?? item.created_at)}
+                </p>
+              </Link>
+              <ReviewControl
+                itemType="conversation"
+                itemId={item.id}
+                productId={item.product_id}
+                itemLabel={item.subject ?? "Untitled conversation"}
+                sourcePath={`/support?conversation=${item.id}`}
+                review={reviewsByItem.get(reviewKey("conversation", item.id))}
+                currentUserId={user?.id}
+              />
+            </div>
           ))}
         </QueueSection>
 
         <QueueSection title="Pending Approvals" count={approvals.length}>
           {approvals.map((item) => (
-            <Link
-              key={item.id}
-              href="/approvals?status=draft"
-              className="block px-5 py-4 hover:bg-panel-strong"
-            >
-              <div className="flex flex-wrap gap-2">
-                <Badge>{sourceTypeLabel(item.source_type)}</Badge>
-                <Badge>{item.products?.slug ?? "company-wide"}</Badge>
-              </div>
-              <p className="mt-3 text-sm font-medium">{item.source_title}</p>
-              <p className="mt-1 text-xs text-muted">
-                {formatDate(item.updated_at)}
-              </p>
-            </Link>
+            <div key={item.id} className="px-5 py-4">
+              <Link href="/approvals?status=draft" className="block">
+                <div className="flex flex-wrap gap-2">
+                  <Badge>{sourceTypeLabel(item.source_type)}</Badge>
+                  <Badge>{item.products?.slug ?? "company-wide"}</Badge>
+                </div>
+                <p className="mt-3 text-sm font-medium">{item.source_title}</p>
+                <p className="mt-1 text-xs text-muted">
+                  {formatDate(item.updated_at)}
+                </p>
+              </Link>
+              <ReviewControl
+                itemType="approval"
+                itemId={item.id}
+                productId={item.product_id}
+                itemLabel={item.source_title}
+                sourcePath="/approvals?status=draft"
+                review={reviewsByItem.get(reviewKey("approval", item.id))}
+                currentUserId={user?.id}
+              />
+            </div>
           ))}
         </QueueSection>
 
         <QueueSection title="Release Readiness" count={releaseReadiness.length}>
           {releaseReadiness.map((item) => (
-            <Link
-              key={item.id}
-              href="/approvals?status=draft"
-              className="block px-5 py-4 hover:bg-panel-strong"
-            >
-              <div className="flex flex-wrap gap-2">
-                <Badge tone="warning">release gate</Badge>
-                <Badge>{item.products?.slug ?? "unknown"}</Badge>
-              </div>
-              <p className="mt-3 text-sm font-medium">{item.source_title}</p>
-              <p className="mt-1 text-xs text-muted">
-                {typeof item.metadata_json.readiness_decision === "string"
-                  ? item.metadata_json.readiness_decision
-                  : "draft readiness"}
-              </p>
-            </Link>
+            <div key={item.id} className="px-5 py-4">
+              <Link href="/approvals?status=draft" className="block">
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone="warning">release gate</Badge>
+                  <Badge>{item.products?.slug ?? "unknown"}</Badge>
+                </div>
+                <p className="mt-3 text-sm font-medium">{item.source_title}</p>
+                <p className="mt-1 text-xs text-muted">
+                  {typeof item.metadata_json.readiness_decision === "string"
+                    ? item.metadata_json.readiness_decision
+                    : "draft readiness"}
+                </p>
+              </Link>
+              <ReviewControl
+                itemType="release_readiness"
+                itemId={item.id}
+                productId={item.product_id}
+                itemLabel={item.source_title}
+                sourcePath="/approvals?status=draft"
+                review={reviewsByItem.get(reviewKey("release_readiness", item.id))}
+                currentUserId={user?.id}
+              />
+            </div>
           ))}
         </QueueSection>
 
@@ -306,24 +460,34 @@ export default async function WorkQueuePage() {
           count={deliveryResult.data?.length ?? 0}
         >
           {(deliveryResult.data ?? []).map((item) => (
-            <Link
-              key={item.id}
-              href={`/support?conversation=${item.conversation_id}`}
-              className="block px-5 py-4 hover:bg-panel-strong"
-            >
-              <div className="flex flex-wrap gap-2">
-                <Badge tone="danger">delivery failed</Badge>
-                <Badge>{item.conversations?.priority ?? "priority n/a"}</Badge>
-              </div>
-              <p className="mt-3 text-sm font-medium">
-                {item.conversations?.subject ?? "Connector delivery"}
-              </p>
-              <p className="mt-1 line-clamp-2 text-xs text-muted">
-                {typeof item.metadata_json.delivery_error === "string"
-                  ? item.metadata_json.delivery_error
-                  : item.content}
-              </p>
-            </Link>
+            <div key={item.id} className="px-5 py-4">
+              <Link
+                href={`/support?conversation=${item.conversation_id}`}
+                className="block"
+              >
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone="danger">delivery failed</Badge>
+                  <Badge>{item.conversations?.priority ?? "priority n/a"}</Badge>
+                </div>
+                <p className="mt-3 text-sm font-medium">
+                  {item.conversations?.subject ?? "Connector delivery"}
+                </p>
+                <p className="mt-1 line-clamp-2 text-xs text-muted">
+                  {typeof item.metadata_json.delivery_error === "string"
+                    ? item.metadata_json.delivery_error
+                    : item.content}
+                </p>
+              </Link>
+              <ReviewControl
+                itemType="delivery"
+                itemId={item.id}
+                productId={item.conversations?.product_id ?? null}
+                itemLabel={item.conversations?.subject ?? "Connector delivery"}
+                sourcePath={`/support?conversation=${item.conversation_id}`}
+                review={reviewsByItem.get(reviewKey("delivery", item.id))}
+                currentUserId={user?.id}
+              />
+            </div>
           ))}
         </QueueSection>
 
@@ -332,43 +496,57 @@ export default async function WorkQueuePage() {
           count={agentRunsResult.data?.length ?? 0}
         >
           {(agentRunsResult.data ?? []).map((item) => (
-            <Link
-              key={item.id}
-              href="/agents"
-              className="block px-5 py-4 hover:bg-panel-strong"
-            >
-              <div className="flex flex-wrap gap-2">
-                <Badge tone={priorityTone(item.risk_level)}>{item.risk_level}</Badge>
-                <Badge>{item.status}</Badge>
-                <Badge>{item.products?.slug ?? "unknown"}</Badge>
-              </div>
-              <p className="mt-3 text-sm font-medium">
-                {item.agents?.name ?? "Unknown agent"}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                {item.confidence === null
-                  ? "confidence n/a"
-                  : `${Math.round(item.confidence * 100)}% confidence`}
-              </p>
-            </Link>
+            <div key={item.id} className="px-5 py-4">
+              <Link href="/agents" className="block">
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone={priorityTone(item.risk_level)}>{item.risk_level}</Badge>
+                  <Badge>{item.status}</Badge>
+                  <Badge>{item.products?.slug ?? "unknown"}</Badge>
+                </div>
+                <p className="mt-3 text-sm font-medium">
+                  {item.agents?.name ?? "Unknown agent"}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {item.confidence === null
+                    ? "confidence n/a"
+                    : `${Math.round(item.confidence * 100)}% confidence`}
+                </p>
+              </Link>
+              <ReviewControl
+                itemType="agent_run"
+                itemId={item.id}
+                productId={item.product_id}
+                itemLabel={item.agents?.name ?? "Unknown agent"}
+                sourcePath="/agents"
+                review={reviewsByItem.get(reviewKey("agent_run", item.id))}
+                currentUserId={user?.id}
+              />
+            </div>
           ))}
         </QueueSection>
 
         <QueueSection title="Open Tickets" count={ticketsResult.data?.length ?? 0}>
           {(ticketsResult.data ?? []).map((item) => (
-            <Link
-              key={item.id}
-              href="/tickets"
-              className="block px-5 py-4 hover:bg-panel-strong"
-            >
-              <div className="flex flex-wrap gap-2">
-                <Badge tone={statusTone(item.status)}>{item.status}</Badge>
-                <Badge tone={priorityTone(item.priority)}>{item.priority}</Badge>
-                <Badge>{item.products?.slug ?? "unknown"}</Badge>
-              </div>
-              <p className="mt-3 text-sm font-medium">{item.summary}</p>
-              <p className="mt-1 text-xs text-muted">{item.category}</p>
-            </Link>
+            <div key={item.id} className="px-5 py-4">
+              <Link href="/tickets" className="block">
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone={statusTone(item.status)}>{item.status}</Badge>
+                  <Badge tone={priorityTone(item.priority)}>{item.priority}</Badge>
+                  <Badge>{item.products?.slug ?? "unknown"}</Badge>
+                </div>
+                <p className="mt-3 text-sm font-medium">{item.summary}</p>
+                <p className="mt-1 text-xs text-muted">{item.category}</p>
+              </Link>
+              <ReviewControl
+                itemType="ticket"
+                itemId={item.id}
+                productId={item.product_id}
+                itemLabel={item.summary}
+                sourcePath="/tickets"
+                review={reviewsByItem.get(reviewKey("ticket", item.id))}
+                currentUserId={user?.id}
+              />
+            </div>
           ))}
         </QueueSection>
       </div>
