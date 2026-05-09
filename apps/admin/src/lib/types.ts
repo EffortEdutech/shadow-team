@@ -201,3 +201,44 @@ export type MarketingContentDraft = {
   created_at: string;
   updated_at: string;
 };
+
+export type SalesFollowup = {
+  id: string;
+  product_id: string | null;
+  campaign_id: string | null;
+  contact_name: string;
+  contact_email: string | null;
+  company_name: string | null;
+  lead_source: string | null;
+  product_interest: string;
+  status:
+    | "new"
+    | "drafted"
+    | "review"
+    | "approved"
+    | "sent"
+    | "closed"
+    | "archived";
+  priority: "low" | "normal" | "high" | "urgent";
+  next_follow_up_on: string | null;
+  owner_user_id: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SalesFollowupDraft = {
+  id: string;
+  followup_id: string;
+  product_id: string | null;
+  subject: string;
+  body: string;
+  status: "draft" | "review" | "approved" | "sent" | "archived";
+  agent_run_id: string | null;
+  created_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};

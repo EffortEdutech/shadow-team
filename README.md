@@ -384,6 +384,22 @@ Included:
 - campaign side panel
 - read-only planning view
 
+## Sprint 23 Status
+
+Sprint 23 adds the Sales Follow-up Workflow.
+
+Included:
+
+- `sales_followups` table
+- `sales_followup_drafts` table
+- Sales Follow-up Agent seed
+- `/marketing/follow-ups` page
+- create follow-up form
+- AI follow-up draft generation
+- follow-up queue
+- agent run and tool-call logging
+- no outbound sending
+
 Useful commands:
 
 ```powershell

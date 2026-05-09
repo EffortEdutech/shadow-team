@@ -23,6 +23,7 @@ https://supabase.com/dashboard/project/mzcdnvtmwyarcefbroja
 | `sprint_19_work_item_reviews.sql` | Adds operator ownership and reviewed-today tracking for work queue items |
 | `sprint_20_marketing_foundation.sql` | Adds marketing profiles, channels, campaigns, and content drafts |
 | `sprint_21_social_media_agents.sql` | Adds Product Marketing and Social Media Content agents |
+| `sprint_23_sales_followup_workflow.sql` | Adds sales follow-ups, follow-up drafts, and Sales Follow-up Agent |
 
 ## Apply Option A - Supabase SQL Editor
 

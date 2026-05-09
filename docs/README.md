@@ -41,6 +41,7 @@ This folder is the planning source of truth for Sprint 0.
 | `31_SPRINT_20_MARKETING_FOUNDATION.md` | Marketing Foundation notes |
 | `32_SPRINT_21_SOCIAL_MEDIA_DRAFT_WORKFLOW.md` | Social Media Draft Workflow notes |
 | `33_SPRINT_22_CAMPAIGN_CALENDAR.md` | Campaign Calendar notes |
+| `34_SPRINT_23_SALES_FOLLOWUP_WORKFLOW.md` | Sales Follow-up Workflow notes |
 
 ## Product Profiles
 

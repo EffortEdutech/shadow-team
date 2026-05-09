@@ -150,6 +150,12 @@ export default async function MarketingPage() {
         >
           Campaign Calendar
         </Link>
+        <Link
+          href="/marketing/follow-ups"
+          className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-panel px-3 text-sm font-medium hover:bg-panel-strong"
+        >
+          Sales Follow-ups
+        </Link>
       </div>
 
       {loadError ? (
