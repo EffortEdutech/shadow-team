@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { KnowledgeChunk, KnowledgeSource, Product } from "@/lib/types";
 import {
   createKnowledgeSource,
+  generateKnowledgeCuratorDraft,
   updateKnowledgeSourceStatus,
 } from "./actions";
 
@@ -98,9 +99,54 @@ export default async function KnowledgePage({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <section className="rounded-lg border border-border bg-panel p-5 shadow-sm">
-          <h2 className="text-base font-semibold">Add Knowledge Source</h2>
-          <form action={createKnowledgeSource} className="mt-4 space-y-3">
+        <div className="space-y-4">
+          <section className="rounded-lg border border-border bg-panel p-5 shadow-sm">
+            <h2 className="text-base font-semibold">Knowledge Curator Agent</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Draft a knowledge gap, FAQ, or SOP from recent support signals.
+              The result stays draft until a human approves it.
+            </p>
+            <form action={generateKnowledgeCuratorDraft} className="mt-4 space-y-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  Product
+                </span>
+                <select
+                  name="productId"
+                  className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+                >
+                  <option value="">Company-wide</option>
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  Focus
+                </span>
+                <input
+                  name="focus"
+                  defaultValue="repeated support issues and missing FAQs"
+                  className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm"
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="inline-flex h-10 w-full items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong"
+              >
+                Generate draft knowledge
+              </button>
+            </form>
+          </section>
+
+          <section className="rounded-lg border border-border bg-panel p-5 shadow-sm">
+            <h2 className="text-base font-semibold">Add Knowledge Source</h2>
+            <form action={createKnowledgeSource} className="mt-4 space-y-3">
             <label className="block">
               <span className="mb-1 block text-xs font-medium text-muted">
                 Product
@@ -206,8 +252,9 @@ export default async function KnowledgePage({
             >
               Save knowledge
             </button>
-          </form>
-        </section>
+            </form>
+          </section>
+        </div>
 
         <div className="space-y-4">
           <section className="rounded-lg border border-border bg-panel p-4 shadow-sm">

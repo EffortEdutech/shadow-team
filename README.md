@@ -169,6 +169,21 @@ Included:
 - Repo Analyst agent
 - draft-only product access for all six products
 
+## Sprint 11 Status
+
+Sprint 11 adds the first non-support operational workflow: Knowledge Curator.
+
+Included:
+
+- Knowledge Curator Agent form on the Knowledge page
+- recent support signal review
+- existing knowledge review
+- AI-generated draft knowledge sources
+- draft-only knowledge chunks
+- agent run and tool-call logging
+- audit events for curator requests
+- human approval before knowledge is approved
+
 Useful commands:
 
 ```powershell

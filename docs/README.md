@@ -28,6 +28,7 @@ This folder is the planning source of truth for Sprint 0.
 | `18_SPRINT_8_HUMAN_REPLY_OUTBOX.md` | Human reply outbox and connector response path notes |
 | `19_SPRINT_9_DELIVERY_ACKNOWLEDGEMENT.md` | Connector delivery acknowledgement notes |
 | `20_SPRINT_10_DEPARTMENT_AGENT_PROFILES.md` | Department agent profile notes |
+| `21_SPRINT_11_KNOWLEDGE_CURATOR_WORKFLOW.md` | Knowledge Curator workflow notes |
 
 ## Product Profiles
 
