@@ -21,6 +21,7 @@ https://supabase.com/dashboard/project/mzcdnvtmwyarcefbroja
 | `bootstrap_owner.sql` | Sets the first Supabase Auth user as Shadow Team owner |
 | `sprint_10_department_agents.sql` | Adds first non-support department agents and product access |
 | `sprint_19_work_item_reviews.sql` | Adds operator ownership and reviewed-today tracking for work queue items |
+| `sprint_20_marketing_foundation.sql` | Adds marketing profiles, channels, campaigns, and content drafts |
 
 ## Apply Option A - Supabase SQL Editor
 

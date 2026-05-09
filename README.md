@@ -336,6 +336,24 @@ Next direction:
 - Sprint 24: Marketing Analytics
 - Sprint 25: Social Connector Prep
 
+## Sprint 20 Status
+
+Sprint 20 adds the Marketing Foundation.
+
+Included:
+
+- `marketing_profiles` table
+- `marketing_channels` table
+- `marketing_campaigns` table
+- `marketing_content_drafts` table
+- `/marketing` admin page
+- Marketing navigation item
+- product marketing profile form
+- draft campaign form
+- draft social/content form
+- recent campaign and content draft lists
+- draft-only safety boundary
+
 Useful commands:
 
 ```powershell

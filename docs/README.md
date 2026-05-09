@@ -38,6 +38,7 @@ This folder is the planning source of truth for Sprint 0.
 | `28_SPRINT_18_DAILY_BRIEF_OPERATOR_DASHBOARD.md` | Daily Brief and Operator Dashboard notes |
 | `29_SPRINT_19_OPERATOR_OWNERSHIP_REVIEWED_TODAY.md` | Operator Ownership and Reviewed Today notes |
 | `30_STRATEGY_RESET_MARKETING_OPERATIONS_LAYER.md` | Strategy reset for product marketing and social media marketing |
+| `31_SPRINT_20_MARKETING_FOUNDATION.md` | Marketing Foundation notes |
 
 ## Product Profiles
 

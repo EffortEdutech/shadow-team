@@ -138,3 +138,66 @@ export type WorkItemReview = {
   created_at: string;
   updated_at: string;
 };
+
+export type MarketingProfile = {
+  id: string;
+  product_id: string;
+  target_audiences: string[];
+  positioning_statement: string | null;
+  value_propositions: string[];
+  brand_voice: string | null;
+  restricted_claims: string[];
+  approval_owner: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MarketingChannel = {
+  id: string;
+  channel_key: string;
+  channel_name: string;
+  status: "draft" | "active" | "paused" | "retired";
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MarketingCampaign = {
+  id: string;
+  product_id: string | null;
+  name: string;
+  objective: string;
+  audience: string | null;
+  status: "draft" | "planned" | "active" | "completed" | "paused" | "archived";
+  starts_on: string | null;
+  ends_on: string | null;
+  owner_user_id: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MarketingContentDraft = {
+  id: string;
+  product_id: string | null;
+  campaign_id: string | null;
+  channel_id: string | null;
+  title: string;
+  content_body: string;
+  content_type:
+    | "social_post"
+    | "email"
+    | "blog_outline"
+    | "short_video_script"
+    | "ad_copy"
+    | "community_update";
+  status: "draft" | "review" | "approved" | "published" | "archived";
+  planned_for: string | null;
+  created_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
